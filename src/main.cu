@@ -4,9 +4,9 @@
 
 int main() {
 	std::string path = "../../../",
-		vertsFilename = path + "verts.csv",
+		vertsFilename = path + "rotated_verts.csv",
 		meshesFilename = path + "meshes.csv",
-		ground_truth = path + "visible.csv";
+		ground_truth = path + "ground_truth.csv";
 
 	unsigned short verts_rows = 0, meshes_rows = 0, ground_truth_rows = 0, columns = 3;
 

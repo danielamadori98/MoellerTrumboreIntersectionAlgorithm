@@ -14,6 +14,7 @@ __global__ void kernel_fastRayTriangleIntersection(
 	bool fullReturn,
 	bool* intersect, double* t, double* u, double* v) 
 {
+	/*
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
 	
 	if (row < rows) {
@@ -139,4 +140,5 @@ __global__ void kernel_fastRayTriangleIntersection(
 			//TODO: std::cerr << "LineType parameter must be either 'line', 'ray' or 'segment'\n";
 		}
 	}
+	*/
 }

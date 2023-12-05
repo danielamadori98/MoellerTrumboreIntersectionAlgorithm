@@ -1,8 +1,6 @@
 ﻿#include "../include/readCSV.h"
 #include "../include/check_visibility.h"
 
-
-
 int main() {
 	std::string path = "../../../",
 		vertsFilename = path + "rotated_verts.csv",
@@ -44,6 +42,5 @@ int main() {
 		delete[] gt[i];
 	delete[] gt;
 	
-
 	return 0;
 }

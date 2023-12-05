@@ -5,6 +5,7 @@ project ("MoellerTrumboreIntersectionAlgorithm" LANGUAGES CXX CUDA)
 
 file(GLOB_RECURSE SOURCE_FILES
     "src/*.cu"
+    "src/*.cuh"
     "src/*.cpp"
     "include/*.h"
 )

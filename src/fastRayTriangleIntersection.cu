@@ -1,5 +1,4 @@
-#include "../include/fastRayTriangleIntersection.h"
-#include <iostream>
+#include "fastRayTriangleIntersection.cuh"
 
 void fastRayTriangleIntersection(double* orig, double* dir, double** V1, double** V2, double** V3, unsigned short rows, unsigned short columns, Border border, LineType lineType, PlaneType planeType, bool fullReturn, bool* intersect, double* t, double* u, double* v) {
 	// Settings defaults values

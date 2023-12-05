@@ -25,5 +25,7 @@ void fastRayTriangleIntersection(double* orig, double* dir,
 								bool fullReturn,
 								bool* intersect, double* t, double* u, double* v);//Returning values
 
+__global__ void kernel_fastRayTriangleIntersection(double* orig, double* dir, double** V1, double** V2, double** V3, unsigned short rows, unsigned short columns, Border border, LineType lineType, PlaneType planeType, bool fullReturn, bool* intersect, double* t, double* u, double* v);
+
 
 #endif FAST_RAY_TRIANGLE_INTERSECTION_H

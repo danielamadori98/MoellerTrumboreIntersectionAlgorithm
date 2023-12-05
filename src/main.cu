@@ -2,6 +2,7 @@
 #include "../include/check_visibility.h"
 
 
+
 int main() {
 	std::string path = "../../../",
 		vertsFilename = path + "rotated_verts.csv",
@@ -23,29 +24,13 @@ int main() {
 		std::cerr << "Empty files" << std::endl;
 		return -1;
 	}
-
-	std::cout << "Number of Verts rows: " << verts_rows << std::endl;
-	std::cout << "Number of Meshes rows: " << meshes_rows << std::endl;
-
+	
 	if (verts_rows != ground_truth_rows) {
 		std::cerr << "Number of rows in Verts and Ground Truth files are different" << std::endl;
 		return -1;
 	}
 	
-	bool* visible = check_visibility(verts, verts_rows, meshes, meshes_rows, columns);
-
-	// Check the result
-	bool error = false;
-	for(unsigned short i = 0; i < verts_rows; i++) {
-		if (visible[i] != gt[i][0]) {
-			error = true;
-			std::cerr << "Error in vertex " << i << std::endl;
-			std::cerr << "Expected: " << gt[i][0] << " - Obtained: " << visible[i] << std::endl;
-		}
-	}
-	if(!error)
-		std::cout << "All vertices are correctly classified" << std::endl;
-
+	bool* visible = check_visibility(verts, verts_rows, meshes, meshes_rows, columns, gt);
 
 	for (unsigned short i = 0; i < verts_rows; i++)
 		delete[] verts[i];

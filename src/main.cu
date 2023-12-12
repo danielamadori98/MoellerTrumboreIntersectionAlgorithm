@@ -2,7 +2,7 @@
 #include "../include/check_visibility.h"
 
 int main() {
-	std::string path = "../../../",
+	std::string path = "../",
 		vertsFilename = path + "rotated_verts.csv",
 		meshesFilename = path + "meshes.csv",
 		ground_truth = path + "ground_truth.csv";

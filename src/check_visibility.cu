@@ -125,6 +125,8 @@ bool* parallel_code(
 		* d_t, * d_u, * d_v;
 	bool* d_flag, * d_visible;
 
+	std::cout << "Before Allocation\n";
+
 	// Allocate memory for device variables and copy data from host to device
 	cudaMalloc((void**)&d_camera_location, columns * sizeof(double));
 	cudaMalloc((void**)&d_verts, verts_rows * columns * sizeof(double));
@@ -140,8 +142,10 @@ bool* parallel_code(
 	cudaMalloc((void**)&d_v, meshes_rows * sizeof(double));
 	cudaMalloc((void**)&d_visible, meshes_rows * sizeof(bool));
 
+	std::cout << "After Allocation\n";
+
 	// Creating the streams
-	unsigned short SegSize = 32, batch = std::round(meshes_rows / SegSize);
+	unsigned short SegSize = 32, batch = (unsigned short)std::round(meshes_rows / SegSize);
 	dim3 blockDim(SegSize, 1);
 	dim3 gridDim(batch, 1);
 
@@ -149,7 +153,12 @@ bool* parallel_code(
 	for (unsigned short i = 0; i < batch; i++)
 		cudaStreamCreate(&meshes_streams[i]);
 
+	std::cout << "After creating streams\n";
+
 	cudaMemcpy(d_camera_location, camera_location, columns * sizeof(double), cudaMemcpyHostToDevice);
+
+	std::cout << "After copyng camera_location\n";
+
 	for (unsigned short i = 0; i < verts_rows; i++) {
 		visible[i] = true;
 
@@ -160,15 +169,15 @@ bool* parallel_code(
 			cudaMemcpyAsync(d_V1 + j * SegSize, V1 + j * SegSize, SegSize * columns * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[j]);
 			cudaMemcpyAsync(d_V2 + j * SegSize, V2 + j * SegSize, SegSize * columns * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[j]);
 			cudaMemcpyAsync(d_V3 + j * SegSize, V3 + j * SegSize, SegSize * columns * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[j]);
-			/*
+			
 			kernel_fastRayTriangleIntersection <<<gridDim, blockDim, 0, meshes_streams[j] >>>
 				(d_camera_location, d_verts + i,
 					d_V1 + j * SegSize, d_V2 + j * SegSize, d_V3 + j * SegSize,
-					SegSize, columns,
-					Exclusive, Segment, TwoSided, false,
+					SegSize,
+					BORDER_EXCLUSIVE, LINE_TYPE_SEGMENT, PLANE_TYPE_TWOSIDED, false,
 					d_flag + j, d_t + j, d_u + j, d_v + j
 					);
-			*/
+			
 			cudaMemcpyAsync(flag + j * SegSize, d_flag + j * SegSize, SegSize * sizeof(bool), cudaMemcpyDeviceToHost, meshes_streams[j]);
 			cudaMemcpyAsync(t + j * SegSize, d_t + j * SegSize, SegSize * sizeof(double), cudaMemcpyDeviceToHost, meshes_streams[j]);
 			cudaMemcpyAsync(u + j * SegSize, d_u + j * SegSize, SegSize * sizeof(double), cudaMemcpyDeviceToHost, meshes_streams[j]);

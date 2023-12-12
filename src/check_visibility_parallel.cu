@@ -104,8 +104,13 @@ bool* check_visibility_parallel_code(
 			visible[i] = false;//TODO: remove this line
 		}
 	}
+
+	std::cout << "After kernel\n";
+
 	//Free memory
 	cudaFree(d_camera_location);
+
+	std::cout << "After freeing d_camera_location\n";
 
 	delete[] d_camera_location;
 	delete[] d_verts;
@@ -117,6 +122,8 @@ bool* check_visibility_parallel_code(
 	delete[] d_u;
 	delete[] d_v;
 	delete[] d_visible;
+
+	std::cout << "After freeing all\n";
 
 	return visible;
 }

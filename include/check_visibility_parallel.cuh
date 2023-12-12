@@ -1,7 +1,6 @@
 #ifndef CHECK_VISIBILITY_PARALLEL_H
 #define CHECK_VISIBILITY_PARALLEL_H
 
-#include <iostream>
 #include "fastRayTriangleIntersection_parallel.cuh"
 
 bool* check_visibility_parallel_code(

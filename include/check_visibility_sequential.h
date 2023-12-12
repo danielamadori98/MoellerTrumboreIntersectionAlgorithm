@@ -1,7 +1,6 @@
 #ifndef CHECK_VISIBILITY_SEQUENTIAL_H
 #define CHECK_VISIBILITY_SEQUENTIAL_H
 
-#include <iostream>
 #include "fastRayTriangleIntersection_sequential.h"
 
 bool* check_visibility_sequential_code(

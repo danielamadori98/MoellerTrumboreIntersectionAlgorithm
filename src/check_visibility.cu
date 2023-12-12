@@ -1,6 +1,4 @@
 #include "../include/check_visibility.h"
-#include "../include/check_visibility_parallel.cuh"
-#include "../include/check_visibility_sequential.h"
 
 void check(bool* visible, bool** gt, unsigned short verts_rows) {
 	bool error = false;

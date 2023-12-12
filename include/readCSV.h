@@ -114,12 +114,6 @@ unsigned short** read_CSV_unsigned_short(const std::string& filename, unsigned s
 	return dataset;
 }
 
-
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
-
 bool** read_CSV_bool(const std::string& filename, unsigned short columnsSize, char separator, unsigned short& rowsCounter) {
 	std::ifstream file(filename);
 
@@ -174,5 +168,4 @@ bool** read_CSV_bool(const std::string& filename, unsigned short columnsSize, ch
 	return dataset;
 }
 
-
-#endif CSV_READER_H
+#endif

@@ -51,13 +51,13 @@ bool* check_visibility(
 		std::cout << V3[i][0] << ", " << V3[i][1] << ", " << V3[i][2] << std::endl;
 	*/
 
-	bool* flag = new bool[meshes_rows], * visible = new bool[verts_rows];
+	bool* flag = new bool[meshes_rows], *visible = new bool[verts_rows];
 
 	//the t in the matlab code was be replaced by the v to mantain the same name used in the fastRayTriangleIntersection function
-	double* t = new double[meshes_rows], * u = new double[meshes_rows], * v = new double[meshes_rows];
+	double* t = new double[meshes_rows], *u = new double[meshes_rows], *v = new double[meshes_rows];
 
-	visible = sequential_code(camera_location, verts, verts_rows, meshes, meshes_rows, columns, V1, V2, V3, flag, t, u, v, visible);
-	check(visible, gt, verts_rows);
+	//visible = sequential_code(camera_location, verts, verts_rows, meshes, meshes_rows, columns, V1, V2, V3, flag, t, u, v, visible);
+	//check(visible, gt, verts_rows);
 	
 	visible = parallel_code(camera_location, verts, verts_rows, meshes, meshes_rows, columns, V1, V2, V3, flag, t, u, v, visible);
 	check(visible, gt, verts_rows);
@@ -125,6 +125,26 @@ bool* parallel_code(
 		* d_t, * d_u, * d_v;
 	bool* d_flag, * d_visible;
 
+	//TODO remove this (is just for testing)
+	meshes_rows = 32;
+	verts_rows = 32;
+
+	// Initialize CUDA
+	cudaError_t cudaStatus = cudaSetDevice(0);  // You can set the GPU device index as needed
+	if (cudaStatus != cudaSuccess)
+		std::cerr << "cudaSetDevice failed! Error: " << cudaGetErrorString(cudaStatus) << std::endl;
+	
+
+	int device;
+	cudaGetDevice(&device);
+
+	cudaDeviceProp deviceProp;
+	cudaGetDeviceProperties(&deviceProp, device);
+
+	unsigned short maxStreams = deviceProp.asyncEngineCount;
+	std::cout << "Maximum number of CUDA streams on GPU " << device << ": " << maxStreams << std::endl;
+
+
 	std::cout << "Before Allocation\n";
 
 	// Allocate memory for device variables and copy data from host to device
@@ -149,28 +169,28 @@ bool* parallel_code(
 	dim3 blockDim(SegSize, 1);
 	dim3 gridDim(batch, 1);
 
-	cudaStream_t* meshes_streams = new cudaStream_t[batch];
-	for (unsigned short i = 0; i < batch; i++)
+
+	cudaStream_t* meshes_streams = new cudaStream_t[maxStreams];
+	for (unsigned short i = 0; i < maxStreams; i++)
 		cudaStreamCreate(&meshes_streams[i]);
 
-	std::cout << "After creating streams\n";
-
-	cudaMemcpy(d_camera_location, camera_location, columns * sizeof(double), cudaMemcpyHostToDevice);
-
-	std::cout << "After copyng camera_location\n";
 
 	for (unsigned short i = 0; i < verts_rows; i++) {
 		visible[i] = true;
 
-		cudaMemcpy(d_verts + i, verts[i], columns * sizeof(double), cudaMemcpyHostToDevice);
-
 		for (unsigned short j = 0; j < meshes_rows && visible[i]; j += SegSize) {
-			cudaMemcpyAsync(d_meshes + j * SegSize, meshes + j * SegSize, SegSize * columns * sizeof(unsigned short), cudaMemcpyHostToDevice, meshes_streams[j]);
-			cudaMemcpyAsync(d_V1 + j * SegSize, V1 + j * SegSize, SegSize * columns * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[j]);
-			cudaMemcpyAsync(d_V2 + j * SegSize, V2 + j * SegSize, SegSize * columns * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[j]);
-			cudaMemcpyAsync(d_V3 + j * SegSize, V3 + j * SegSize, SegSize * columns * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[j]);
+			unsigned short stream = j % maxStreams;
+			cudaMemcpyAsync(d_camera_location, camera_location, columns * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[stream]);
+			std::cout << "After copyng camera_location\n";
+
+			cudaMemcpyAsync(d_verts + i, verts[i], columns * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[stream]);
+			std::cout << "After copying verts[" << i << "]\n";
+			cudaMemcpyAsync(d_meshes + j * SegSize, meshes + j * SegSize, SegSize * columns * sizeof(unsigned short), cudaMemcpyHostToDevice, meshes_streams[stream]);
+			cudaMemcpyAsync(d_V1 + j * SegSize, V1 + j * SegSize, SegSize * columns * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[stream]);
+			cudaMemcpyAsync(d_V2 + j * SegSize, V2 + j * SegSize, SegSize * columns * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[stream]);
+			cudaMemcpyAsync(d_V3 + j * SegSize, V3 + j * SegSize, SegSize * columns * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[stream]);
 			
-			kernel_fastRayTriangleIntersection <<<gridDim, blockDim, 0, meshes_streams[j] >>>
+			kernel_fastRayTriangleIntersection <<<gridDim, blockDim, 0, meshes_streams[stream] >>>
 				(d_camera_location, d_verts + i,
 					d_V1 + j * SegSize, d_V2 + j * SegSize, d_V3 + j * SegSize,
 					SegSize,
@@ -178,10 +198,10 @@ bool* parallel_code(
 					d_flag + j, d_t + j, d_u + j, d_v + j
 					);
 			
-			cudaMemcpyAsync(flag + j * SegSize, d_flag + j * SegSize, SegSize * sizeof(bool), cudaMemcpyDeviceToHost, meshes_streams[j]);
-			cudaMemcpyAsync(t + j * SegSize, d_t + j * SegSize, SegSize * sizeof(double), cudaMemcpyDeviceToHost, meshes_streams[j]);
-			cudaMemcpyAsync(u + j * SegSize, d_u + j * SegSize, SegSize * sizeof(double), cudaMemcpyDeviceToHost, meshes_streams[j]);
-			cudaMemcpyAsync(v + j * SegSize, d_v + j * SegSize, SegSize * sizeof(double), cudaMemcpyDeviceToHost, meshes_streams[j]);
+			cudaMemcpyAsync(flag + j * SegSize, d_flag + j * SegSize, SegSize * sizeof(bool), cudaMemcpyDeviceToHost, meshes_streams[stream]);
+			cudaMemcpyAsync(t + j * SegSize, d_t + j * SegSize, SegSize * sizeof(double), cudaMemcpyDeviceToHost, meshes_streams[stream]);
+			cudaMemcpyAsync(u + j * SegSize, d_u + j * SegSize, SegSize * sizeof(double), cudaMemcpyDeviceToHost, meshes_streams[stream]);
+			cudaMemcpyAsync(v + j * SegSize, d_v + j * SegSize, SegSize * sizeof(double), cudaMemcpyDeviceToHost, meshes_streams[stream]);
 
 			for (unsigned short k = j; k < j + SegSize; k++)
 				if (flag[k]) {

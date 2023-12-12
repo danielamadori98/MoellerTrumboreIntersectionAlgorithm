@@ -50,4 +50,4 @@ __global__ void kernel_fastRayTriangleIntersection(
 		bool fullReturn,
 		bool* intersect, double* t, double* u, double* v);//Returning values
 
-#endif FAST_RAY_TRIANGLE_INTERSECTION_H
+#endif

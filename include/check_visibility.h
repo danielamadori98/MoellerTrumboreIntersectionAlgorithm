@@ -37,4 +37,4 @@ bool* parallel_code(
 	bool* flag,
 	double* t, double* u, double* v, bool* visible);
 
-#endif CHECK_VISIBILITY_H
+#endif

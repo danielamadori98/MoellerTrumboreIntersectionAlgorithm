@@ -60,22 +60,21 @@ bool* check_visibility_parallel_code(
 	for (unsigned short i = 0; i < maxStreams; i++)
 		cudaStreamCreate(&meshes_streams[i]);
 
-
-	for (unsigned short i = 0; i < 1; i++) {
+	for (unsigned short i = 0; i < verts_rows; i++) {
 		visible[i] = true;
 
-		for (unsigned short j = 0; j < 1; j++) {
+		for (unsigned short j = 0; j < segNumber && visible[i]; j++) {
 			unsigned short stream = j % maxStreams;
 			cudaMemcpyAsync(d_camera_location, camera_location, columns * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[stream]);
-			std::cout << "After copyng camera_location\n";
+			//std::cout << "After copyng camera_location\n";
 			cudaMemcpyAsync(d_verts + i, verts[i], columns * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[stream]);
-			std::cout << "After copying verts[" << i << "]\n";
-
+			//std::cout << "After copying verts[" << i << "]\n";
+			
 			cudaMemcpyAsync(d_meshes + j * segSize, meshes + j * segSize, segSize * columns * sizeof(unsigned short), cudaMemcpyHostToDevice, meshes_streams[stream]);
 			cudaMemcpyAsync(d_V1 + j * segSize, V1 + j * segSize, segSize * columns * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[stream]);
 			cudaMemcpyAsync(d_V2 + j * segSize, V2 + j * segSize, segSize * columns * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[stream]);
 			cudaMemcpyAsync(d_V3 + j * segSize, V3 + j * segSize, segSize * columns * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[stream]);
-			std::cout << "After copying all, j = " << j << "\n";
+			//std::cout << "After copying all, j = " << j << "\n";
 
 			kernel_fastRayTriangleIntersection << <gridDim, blockDim, 0, meshes_streams[stream] >> >
 				(d_camera_location, d_verts + i,
@@ -85,23 +84,22 @@ bool* check_visibility_parallel_code(
 					d_flag + j, d_t + j, d_u + j, d_v + j
 					);
 
-			std::cout << "After kernel, j = " << j << "\n";
+			//std::cout << "After kernel, j = " << j << "\n";
 
 			cudaMemcpyAsync(flag + j * segSize, d_flag + j * segSize, segSize * sizeof(bool), cudaMemcpyDeviceToHost, meshes_streams[stream]);
-			std::cout << "After flag, j = " << j << "\n";
+			//std::cout << "After flag, j = " << j << "\n";
 			cudaMemcpyAsync(t + j * segSize, d_t + j * segSize, segSize * sizeof(double), cudaMemcpyDeviceToHost, meshes_streams[stream]);
-			std::cout << "After t, j = " << j << "\n";
+			//std::cout << "After t, j = " << j << "\n";
 			cudaMemcpyAsync(u + j * segSize, d_u + j * segSize, segSize * sizeof(double), cudaMemcpyDeviceToHost, meshes_streams[stream]);
-			std::cout << "After u, j = " << j << "\n";
+			//std::cout << "After u, j = " << j << "\n";
 			cudaMemcpyAsync(v + j * segSize, d_v + j * segSize, segSize * sizeof(double), cudaMemcpyDeviceToHost, meshes_streams[stream]);
-			std::cout << "After v, j = " << j << "\n";
-			/*for (unsigned short k = j; k < j + segSize; k++)
+			//std::cout << "After v, j = " << j << "\n";
+			
+			for (unsigned short k = j * segSize; k < j * segSize + segSize; k++)
 				if (flag[k]) {
 					visible[i] = false;
 					break;
 				}
-			*/
-			visible[i] = false;//TODO: remove this line
 		}
 	}
 
@@ -112,7 +110,7 @@ bool* check_visibility_parallel_code(
 
 	std::cout << "After freeing d_camera_location\n";
 
-	delete[] d_camera_location;
+	/*delete[] d_camera_location;
 	delete[] d_verts;
 	delete[] d_V1;
 	delete[] d_V2;
@@ -122,7 +120,7 @@ bool* check_visibility_parallel_code(
 	delete[] d_u;
 	delete[] d_v;
 	delete[] d_visible;
-
+	*/
 	std::cout << "After freeing all\n";
 
 	return visible;

@@ -1,9 +1,8 @@
-#include "fastRayTriangleIntersection.cuh"
+#include "../include/fastRayTriangleIntersection_sequential.h"
 
 void fastRayTriangleIntersection(double* orig, double* dir, double** V1, double** V2, double** V3, unsigned short rows, unsigned short columns, Border border, LineType lineType, PlaneType planeType, bool fullReturn, bool* intersect, double* t, double* u, double* v) {
 	// Settings defaults values
 	double eps = 1e-5, zero;
-
 
 	switch (border) {// Read user preferences: lineType, border
 	case Normal:

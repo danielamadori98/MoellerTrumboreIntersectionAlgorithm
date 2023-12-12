@@ -8,6 +8,7 @@ file(GLOB_RECURSE SOURCE_FILES
     "src/*.cuh"
     "src/*.cpp"
     "include/*.h"
+    "include/*.cuh"
 )
 
 add_executable (MoellerTrumboreIntersectionAlgorithm ${SOURCE_FILES})

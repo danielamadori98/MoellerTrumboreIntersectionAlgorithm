@@ -1,4 +1,4 @@
-#include "fastRayTriangleIntersection.cuh"
+#include "../include/fastRayTriangleIntersection_parallel.cuh"
 
 __device__ void cross(double* a, double* b, double* result) {
 	result[0] = a[1] * b[2] - a[2] * b[1];
@@ -21,16 +21,16 @@ __global__ void kernel_fastRayTriangleIntersection(
 		double eps = 1e-5, zero;
 		
 		switch (border) {
-			case Normal:
+			case BORDER_NORMAL:
 				zero = 0.0;
 				break;
-			case Inclusive:
+			case BORDER_INCLUSIVE:
 				zero = eps;
 				break;
-			case Exclusive:
+			case BORDER_EXCLUSIVE:
 				zero = -eps;
 				break;
-			default:
+			//default:
 				//TODO: Handle error
 		}
 		
@@ -51,9 +51,9 @@ __global__ void kernel_fastRayTriangleIntersection(
 		for (unsigned short i = 0; i < COL_SIZE; i++)
 			det[row] += edge1[row][i] * pvec[row][i];
 		
-		if (planeType == TwoSided)
+		if (planeType == PLANE_TYPE_TWOSIDED)
 			intersect[row] = abs(det[row]) > eps;
-		else if (planeType == OneSided)
+		else if (planeType == PLANE_TYPE_ONESIDED)
 			intersect[row] = det[row] > eps;
 		else {
 			// Handle error
@@ -112,7 +112,7 @@ __global__ void kernel_fastRayTriangleIntersection(
 					v[row] += dir[i] * qvec[i];
 				v[row] /= det[row];
 				
-				if (lineType == Line)
+				if (lineType == LINE_TYPE_LINE)
 					t[row] = NAN;
 				else {
 					t[row] = 0;
@@ -128,12 +128,12 @@ __global__ void kernel_fastRayTriangleIntersection(
 		}
 	
 		switch (lineType) {
-		case Line:// Nothing to do
+		case LINE_TYPE_LINE:// Nothing to do
 			break;
-		case Ray:
+		case LINE_TYPE_RAY:
 				intersect[row] = intersect[row] && t[row] >= -zero;
 			break;
-		case Segment:
+		case LINE_TYPE_SEGMENT:
 				intersect[row] = intersect[row] && t[row] >= -zero && t[row] <= 1.0 + zero;
 			break;
 		//default:

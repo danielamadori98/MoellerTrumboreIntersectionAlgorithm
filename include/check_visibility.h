@@ -4,6 +4,10 @@
 #include "check_visibility_parallel.cuh"
 #include "check_visibility_sequential.h"
 
+#include "Timer.cuh"
+#include "CheckError.cuh"
+using namespace timer;
+
 void check(bool* visible, bool** gt, unsigned short verts_rows);
 
 bool* check_visibility(

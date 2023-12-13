@@ -7,6 +7,7 @@ void check(bool* visible, bool** gt, unsigned short verts_rows) {
 			error = true;
 			std::cerr << "Error in vertex " << i << std::endl;
 			std::cerr << "Expected: " << gt[i][0] << " - Obtained: " << visible[i] << std::endl;
+			return; //Remove this line to print all errors
 		}
 	}
 	if(!error)
@@ -57,13 +58,23 @@ bool* check_visibility(
 	double* t = new double[meshes_rows], *u = new double[meshes_rows], *v = new double[meshes_rows];
 
 
-	//TODO TIMER
-	check_visibility_sequential_code(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
-	check(visible, gt, verts_rows);
+	Timer<DEVICE> TM_device;
+	Timer<HOST>   TM_host;
 
-	//TODO TIMER
-	check_visibility_parallel_code(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
+	TM_host.start();
+	//check_visibility_sequential_code(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
+	TM_host.stop();
+	TM_host.print("MatrixTranspose host:   ");
 	//check(visible, gt, verts_rows);
+
+	TM_device.start();
+	check_visibility_parallel_code(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
+	TM_device.stop();
+	CHECK_CUDA_ERROR
+		TM_device.print("MatrixTranspose device: ");
+
+	std::cout << std::setprecision(1) << "Speedup: " << TM_host.duration() / TM_device.duration() << "x\n\n";
+	check(visible, gt, verts_rows);
 
 	for (unsigned short i = 0; i < meshes_rows; i++) {
 		delete[] V1[i];

@@ -60,6 +60,7 @@ double** read_CSV_double(const std::string& filename, unsigned short columnsSize
 	return dataset;
 }
 
+
 unsigned short** read_CSV_unsigned_short(const std::string& filename, unsigned short columnsSize, char separator, unsigned short& rowsCounter) {
 	std::ifstream file(filename);
 

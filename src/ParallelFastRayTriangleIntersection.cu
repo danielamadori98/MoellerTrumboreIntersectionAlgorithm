@@ -7,11 +7,9 @@ __device__ void cross(double* a, double* b, double* result) {
 }
 
 __global__ void kernel_fastRayTriangleIntersection(
-	double orig[COL_SIZE], double dir[COL_SIZE],
-	double * V1[COL_SIZE], double * V2[COL_SIZE], double * V3[COL_SIZE],
-	unsigned short rows,
-	unsigned short border, unsigned short lineType, unsigned short planeType,
-	bool fullReturn,
+	double orig[COLUMNS_SIZE], double dir[COLUMNS_SIZE],
+	double** V1, double** V2, double** V3, unsigned short rows,
+	unsigned short border, unsigned short lineType, unsigned short planeType, bool fullReturn,
 	bool* intersect, double* t, double* u, double* v) 
 {
 	
@@ -34,10 +32,10 @@ __global__ void kernel_fastRayTriangleIntersection(
 				//TODO: Handle error
 		}
 		
-		__shared__ double edge1[ROW_SIZE][COL_SIZE], edge2[ROW_SIZE][COL_SIZE],
-			tvec[ROW_SIZE][COL_SIZE], pvec[ROW_SIZE][COL_SIZE], det[ROW_SIZE];
+		__shared__ double edge1[ROWS_SIZE][COLUMNS_SIZE], edge2[ROWS_SIZE][COLUMNS_SIZE],
+			tvec[ROWS_SIZE][COLUMNS_SIZE], pvec[ROWS_SIZE][COLUMNS_SIZE], det[ROWS_SIZE];
 		
-		for (unsigned short i = 0; i < COL_SIZE; i++) {
+		for (unsigned short i = 0; i < COLUMNS_SIZE; i++) {
 			edge1[row][i] = V2[row][i] - V1[row][i];
 			edge2[row][i] = V3[row][i] - V1[row][i];
 			tvec[row][i] = orig[i] - V1[row][i];
@@ -48,7 +46,7 @@ __global__ void kernel_fastRayTriangleIntersection(
 		pvec[row][2] = dir[0] * edge2[row][1] - dir[1] * edge2[row][0];
 		
 		det[row] = 0;
-		for (unsigned short i = 0; i < COL_SIZE; i++)
+		for (unsigned short i = 0; i < COLUMNS_SIZE; i++)
 			det[row] += edge1[row][i] * pvec[row][i];
 		
 		if (planeType == PLANE_TYPE_TWOSIDED)
@@ -64,7 +62,7 @@ __global__ void kernel_fastRayTriangleIntersection(
 			u[row] = NAN;
 		else {
 			u[row] = 0;
-			for (unsigned short i = 0; i < COL_SIZE; i++)
+			for (unsigned short i = 0; i < COLUMNS_SIZE; i++)
 				u[row] += tvec[row][i] * pvec[row][i];
 			
 			u[row] /= det[row];
@@ -73,7 +71,7 @@ __global__ void kernel_fastRayTriangleIntersection(
 		//__syncthreads();
 
 		if (fullReturn) {
-			__shared__ double qvec[COL_SIZE];
+			__shared__ double qvec[COLUMNS_SIZE];
 			if (!intersect[row])
 				v[row] = NAN, t[row] = NAN;
 			else {
@@ -82,7 +80,7 @@ __global__ void kernel_fastRayTriangleIntersection(
 				qvec[2] = tvec[row][0] * edge1[row][1] - tvec[row][1] * edge1[row][0];
 				
 				v[row] = t[row] = 0;
-				for (unsigned short i = 0; i < COL_SIZE; i++){
+				for (unsigned short i = 0; i < COLUMNS_SIZE; i++){
 					v[row] += dir[i] * qvec[i];
 					t[row] += edge2[row][i] * qvec[i];
 				}
@@ -96,7 +94,7 @@ __global__ void kernel_fastRayTriangleIntersection(
 			//__syncthreads();
 
 		} else {
-			__shared__ double qvec[COL_SIZE];
+			__shared__ double qvec[COLUMNS_SIZE];
 
 			intersect[row] = intersect[row] && u[row] >= -zero && u[row] <= 1 + zero;
 
@@ -108,7 +106,7 @@ __global__ void kernel_fastRayTriangleIntersection(
 				qvec[2] = tvec[row][0] * edge1[row][1] - tvec[row][1] * edge1[row][0];
 				
 				v[row] = 0;
-				for (unsigned short i = 0; i < COL_SIZE; i++)
+				for (unsigned short i = 0; i < COLUMNS_SIZE; i++)
 					v[row] += dir[i] * qvec[i];
 				v[row] /= det[row];
 				
@@ -116,7 +114,7 @@ __global__ void kernel_fastRayTriangleIntersection(
 					t[row] = NAN;
 				else {
 					t[row] = 0;
-					for (unsigned short i = 0; i < COL_SIZE; i++)
+					for (unsigned short i = 0; i < COLUMNS_SIZE; i++)
 						t[row] += edge2[row][i] * qvec[i];
 					t[row] /= det[row];
 				}

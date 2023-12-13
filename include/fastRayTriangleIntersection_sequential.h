@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+#define COLUMNS_SIZE 3
+
 enum Border {
 	Normal,     // Triangle is exactly as defined
 	Inclusive,  // Triangle is marginally larger
@@ -20,12 +22,11 @@ enum PlaneType {
 	OneSided   // Treats triangles as one sided
 };
 
+
 void fastRayTriangleIntersection(
-		double* orig, double* dir,
-		double** V1, double** V2, double** V3,
-		unsigned short rows, unsigned short columns,
-		Border border, LineType lineType, PlaneType planeType,
-		bool fullReturn,
+		double orig[COLUMNS_SIZE], double dir[COLUMNS_SIZE],
+		double** V1, double** V2, double** V3, unsigned short rows,
+		Border border, LineType lineType, PlaneType planeType, bool fullReturn,
 		bool* intersect, double* t, double* u, double* v);//Returning values
 
 #endif

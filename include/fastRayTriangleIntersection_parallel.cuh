@@ -15,15 +15,13 @@
 #define PLANE_TYPE_ONESIDED 1
 
 
-#define ROW_SIZE 32
-#define COL_SIZE 3
+#define ROWS_SIZE 32
+#define COLUMNS_SIZE 3
 
 __global__ void kernel_fastRayTriangleIntersection(
-		double orig[COL_SIZE], double dir[COL_SIZE],
-		double* V1[COL_SIZE], double* V2[COL_SIZE], double* V3[COL_SIZE],
-		unsigned short rows,
-		unsigned short border, unsigned short lineType, unsigned short planeType,
-		bool fullReturn,
+		double orig[COLUMNS_SIZE], double dir[COLUMNS_SIZE],
+		double** V1, double** V2, double** V3, unsigned short rows,
+		unsigned short border, unsigned short lineType, unsigned short planeType, bool fullReturn,
 		bool* intersect, double* t, double* u, double* v);//Returning values
 
 #endif

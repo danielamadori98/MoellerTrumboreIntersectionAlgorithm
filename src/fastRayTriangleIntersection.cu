@@ -1,6 +1,11 @@
 #include "../include/fastRayTriangleIntersection_sequential.h"
 
-void fastRayTriangleIntersection(double* orig, double* dir, double** V1, double** V2, double** V3, unsigned short rows, unsigned short columns, Border border, LineType lineType, PlaneType planeType, bool fullReturn, bool* intersect, double* t, double* u, double* v) {
+void fastRayTriangleIntersection(
+		double orig[COLUMNS_SIZE], double dir[COLUMNS_SIZE],
+		double** V1, double** V2, double** V3, unsigned short rows,
+		Border border, LineType lineType, PlaneType planeType, bool fullReturn,
+		bool* intersect, double* t, double* u, double* v){
+
 	// Settings defaults values
 	double eps = 1e-5, zero;
 
@@ -27,18 +32,20 @@ void fastRayTriangleIntersection(double* orig, double* dir, double** V1, double*
 		pvec  = cross(dir, edge2,2);  % begin calculating determinant - also used to calculate U parameter
 		det   = sum(edge1.*pvec,2);   % determinant of the matrix M = dot(edge1,pvec)
 	*/
+
 	//Dyn allocation of edge1, edge2, tvec, pvec, det
-	double** edge1 = new double*[rows], ** edge2 = new double* [rows],
-		** tvec = new double* [rows], ** pvec = new double* [rows],
+	/*double* edge1[] = new double[rows][COLUMNS_SIZE], * edge2 = new double[rows][COLUMNS_SIZE],
+		*tvec = new double[rows][COLUMNS_SIZE], *pvec = new double[rows][COLUMNS_SIZE],
 		*det = new double[rows];
+	*/
+	double(*edge1)[COLUMNS_SIZE] = new double[rows][COLUMNS_SIZE];
+	double(*edge2)[COLUMNS_SIZE] = new double[rows][COLUMNS_SIZE];
+	double(*tvec)[COLUMNS_SIZE] = new double[rows][COLUMNS_SIZE];
+	double(*pvec)[COLUMNS_SIZE] = new double[rows][COLUMNS_SIZE];
+	double* det = new double[rows];
 
 	for (unsigned short i = 0; i < rows; i++) {
-		edge1[i] = new double[columns];
-		edge2[i] = new double[columns];
-		tvec[i] = new double[columns];
-		pvec[i] = new double[columns];
-
-		for (unsigned short j = 0; j < columns; j++) {
+		for (unsigned short j = 0; j < COLUMNS_SIZE; j++) {
 			edge1[i][j] = V2[i][j] - V1[i][j];
 			edge2[i][j] = V3[i][j] - V1[i][j];
 			tvec[i][j] = orig[j] - V1[i][j];
@@ -49,7 +56,7 @@ void fastRayTriangleIntersection(double* orig, double* dir, double** V1, double*
 		pvec[i][2] = dir[0] * edge2[i][1] - dir[1] * edge2[i][0];
 
 		det[i] = 0;
-		for (unsigned short j = 0; j < columns; j++)
+		for (unsigned short j = 0; j < COLUMNS_SIZE; j++)
 			det[i] += edge1[i][j] * pvec[i][j];
 	}
 
@@ -73,12 +80,6 @@ void fastRayTriangleIntersection(double* orig, double* dir, double** V1, double*
 
 	else {
 		std::cerr << "PlaneType parameter must be either 'two sided' or 'one sided'\n";
-		for (unsigned short i = 0; i < rows; i++) {
-			delete[] edge1[i];
-			delete[] edge2[i];
-			delete[] tvec[i];
-			delete[] pvec[i];
-		}
 		delete[] edge1;
 		delete[] edge2;
 		delete[] tvec;
@@ -97,7 +98,7 @@ void fastRayTriangleIntersection(double* orig, double* dir, double** V1, double*
 			u[i] = NAN;
 		else {
 			u[i] = 0;
-			for (unsigned short j = 0; j < columns; j++)
+			for (unsigned short j = 0; j < COLUMNS_SIZE; j++)
 				u[i] += tvec[i][j] * pvec[i][j];
 
 			u[i] /= det[i];
@@ -113,7 +114,7 @@ void fastRayTriangleIntersection(double* orig, double* dir, double** V1, double*
 			% test if line/plane intersection is within the triangle
 			ok   = (angleOK & u>=-zero & v>=-zero & u+v<=1.0+zero);
 		*/
-		double *qvec = new double[columns]; //Check qvec size, and also if needed fullReturn part
+		double *qvec = new double[COLUMNS_SIZE]; //Check qvec size, and also if needed fullReturn part
 
 		for (unsigned short i = 0; i < rows; i++) {
 			if (!intersect[i])
@@ -125,7 +126,7 @@ void fastRayTriangleIntersection(double* orig, double* dir, double** V1, double*
 				qvec[2] = tvec[i][0] * edge1[i][1] - tvec[i][1] * edge1[i][0];
 
 				v[i] = t[i] = 0;
-				for (unsigned short j = 0; j < columns; j++) {
+				for (unsigned short j = 0; j < COLUMNS_SIZE; j++) {
 					v[i] += dir[j] * qvec[j];
 					t[i] += edge2[i][j] * qvec[j];
 				}
@@ -149,7 +150,7 @@ void fastRayTriangleIntersection(double* orig, double* dir, double** V1, double*
 			% test if line/plane intersection is within the triangle
 			ok = (ok & v>=-zero & u+v<=1.0+zero);
 		*/
-		double *qvec = new double[columns];
+		double *qvec = new double[COLUMNS_SIZE];
 
 		for (unsigned short i = 0; i < rows; i++) {
 			intersect[i] = intersect[i] && u[i] >= -zero && u[i] <= 1 + zero;
@@ -162,7 +163,7 @@ void fastRayTriangleIntersection(double* orig, double* dir, double** V1, double*
 				qvec[2] = tvec[i][0] * edge1[i][1] - tvec[i][1] * edge1[i][0];
 
 				v[i] = 0;
-				for (unsigned short j = 0; j < columns; j++)
+				for (unsigned short j = 0; j < COLUMNS_SIZE; j++)
 					v[i] += dir[j] * qvec[j];
 				v[i] /= det[i];
 
@@ -172,7 +173,7 @@ void fastRayTriangleIntersection(double* orig, double* dir, double** V1, double*
 
 				else {
 					t[i] = 0;
-					for (unsigned short j = 0; j < columns; j++)
+					for (unsigned short j = 0; j < COLUMNS_SIZE; j++)
 						t[i] += edge2[i][j] * qvec[j];
 
 					t[i] /= det[i];
@@ -183,12 +184,6 @@ void fastRayTriangleIntersection(double* orig, double* dir, double** V1, double*
 		}
 	}
 
-	for (unsigned short i = 0; i < rows; i++) {
-		delete[] edge1[i];
-		delete[] edge2[i];
-		delete[] tvec[i];
-		delete[] pvec[i];
-	}
 	delete[] edge1;
 	delete[] edge2;
 	delete[] tvec;

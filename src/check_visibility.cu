@@ -16,21 +16,20 @@ void check(bool* visible, bool** gt, unsigned short verts_rows) {
 bool* check_visibility(
 	double** verts, unsigned short verts_rows,
 	unsigned short** meshes, unsigned short meshes_rows,
-	unsigned short columns,
-	bool** gt) 
-{
+	bool** gt){
 
-	double camera_location[3] = { 0, 0, 0 };
+	double camera_location[COLUMNS_SIZE] = { 0, 0, 0 };
 
 	double** V1 = new double* [meshes_rows];
 	double** V2 = new double* [meshes_rows];
 	double** V3 = new double* [meshes_rows];
-	for (unsigned short i = 0; i < meshes_rows; i++) {
-		V1[i] = new double[columns];
-		V2[i] = new double[columns];
-		V3[i] = new double[columns];
 
-		for (unsigned short j = 0; j < columns; j++) {
+	for (unsigned short i = 0; i < meshes_rows; i++) {
+		V1[i] = new double[COLUMNS_SIZE];
+		V2[i] = new double[COLUMNS_SIZE];
+		V3[i] = new double[COLUMNS_SIZE];
+
+		for (unsigned short j = 0; j < COLUMNS_SIZE; j++) {
 			V1[i][j] = verts[meshes[i][0]][j];
 			V2[i][j] = verts[meshes[i][1]][j];
 			V3[i][j] = verts[meshes[i][2]][j];
@@ -56,11 +55,13 @@ bool* check_visibility(
 	//the t in the matlab code was be replaced by the v to mantain the same name used in the fastRayTriangleIntersection function
 	double* t = new double[meshes_rows], *u = new double[meshes_rows], *v = new double[meshes_rows];
 
-	//visible = check_visibility_sequential_code(camera_location, verts, verts_rows, meshes, meshes_rows, columns, V1, V2, V3, flag, t, u, v, visible);
+	//TODO TIMER
+	//visible = check_visibility_sequential_code(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
 	//check(visible, gt, verts_rows);
-	
-	visible = check_visibility_parallel_code(camera_location, verts, verts_rows, meshes, meshes_rows, columns, V1, V2, V3, flag, t, u, v, visible);
-	check(visible, gt, verts_rows);
+
+	//TODO TIMER
+	visible = check_visibility_parallel_code(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
+	//check(visible, gt, verts_rows);
 
 	for (unsigned short i = 0; i < meshes_rows; i++) {
 		delete[] V1[i];

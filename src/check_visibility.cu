@@ -50,17 +50,19 @@ bool* check_visibility(
 		std::cout << V3[i][0] << ", " << V3[i][1] << ", " << V3[i][2] << std::endl;
 	*/
 
-	bool* flag = new bool[meshes_rows], *visible = new bool[verts_rows];
+	//Output variables
 
+	bool* flag = new bool[meshes_rows], *visible = new bool[verts_rows];
 	//the t in the matlab code was be replaced by the v to mantain the same name used in the fastRayTriangleIntersection function
 	double* t = new double[meshes_rows], *u = new double[meshes_rows], *v = new double[meshes_rows];
 
-	//TODO TIMER
-	//visible = check_visibility_sequential_code(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
-	//check(visible, gt, verts_rows);
 
 	//TODO TIMER
-	visible = check_visibility_parallel_code(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
+	check_visibility_sequential_code(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
+	check(visible, gt, verts_rows);
+
+	//TODO TIMER
+	check_visibility_parallel_code(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
 	//check(visible, gt, verts_rows);
 
 	for (unsigned short i = 0; i < meshes_rows; i++) {

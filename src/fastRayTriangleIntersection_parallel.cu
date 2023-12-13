@@ -1,12 +1,13 @@
 #include "../include/fastRayTriangleIntersection_parallel.cuh"
 
+/*
 __device__ void cross(double* a, double* b, double* result) {
 	result[0] = a[1] * b[2] - a[2] * b[1];
 	result[1] = a[2] * b[0] - a[0] * b[2];
 	result[2] = a[0] * b[1] - a[1] * b[0];
-}
+}*/
 
-__global__ void kernel_fastRayTriangleIntersection(
+__global__ void fastRayTriangleIntersection_parallel(
 	double orig[COLUMNS_SIZE], double dir[COLUMNS_SIZE],
 	double** V1, double** V2, double** V3, unsigned short rows,
 	unsigned short border, unsigned short lineType, unsigned short planeType, bool fullReturn,

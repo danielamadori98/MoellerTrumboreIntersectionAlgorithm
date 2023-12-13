@@ -18,7 +18,7 @@
 #define ROWS_SIZE 32
 #define COLUMNS_SIZE 3
 
-__global__ void kernel_fastRayTriangleIntersection(
+__global__ void fastRayTriangleIntersection_parallel(
 		double orig[COLUMNS_SIZE], double dir[COLUMNS_SIZE],
 		double** V1, double** V2, double** V3, unsigned short rows,
 		unsigned short border, unsigned short lineType, unsigned short planeType, bool fullReturn,

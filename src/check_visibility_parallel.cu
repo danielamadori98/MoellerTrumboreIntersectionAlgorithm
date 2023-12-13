@@ -1,11 +1,10 @@
 #include "../include/check_visibility_parallel.cuh"
 
-bool* check_visibility_parallel_code(
+void check_visibility_parallel_code(
 	double camera_location[COLUMNS_SIZE],
 	double** verts, unsigned short verts_rows,
 	double** V1, double** V2, double **V3, unsigned short V_rows,
-	bool* flag, 
-	double* t, double* u, double* v, bool* visible)
+	bool* flag, double* t, double* u, double* v, bool* visible) // Output variables
 {
 	// Creating the device variables
 	double *d_camera_location, * d_vert,
@@ -76,7 +75,7 @@ bool* check_visibility_parallel_code(
 			
 			//std::cout << "After copying all, j = " << j << "\n";
 			
-			kernel_fastRayTriangleIntersection<<<gridDim, blockDim, 0, meshes_streams[stream]>>>(
+			fastRayTriangleIntersection_parallel<<<gridDim, blockDim, 0, meshes_streams[stream]>>>(
 				d_camera_location, d_vert,
 				d_V1, d_V2, d_V3, segSize,
 				BORDER_EXCLUSIVE, LINE_TYPE_SEGMENT, PLANE_TYPE_TWOSIDED, false,
@@ -98,9 +97,9 @@ bool* check_visibility_parallel_code(
 					std::cout << "bene!\n";
 					break;
 				}
-
-			//std::cout << "After checking visibility, visible[" << i << "] = " << visible[i] << "\n";
 		}
+
+		std::cout << "After checking visibility, visible[" << verts_row << "] = " << visible[verts_row] << "\n";
 	}
 
 	//Free memory
@@ -116,6 +115,4 @@ bool* check_visibility_parallel_code(
 	cudaFree(d_v);
 
 	std::cout << "After freeing all\n";
-
-	return visible;
 }

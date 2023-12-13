@@ -23,10 +23,10 @@ enum PlaneType {
 };
 
 
-void fastRayTriangleIntersection(
+void fastRayTriangleIntersection_sequential(
 		double orig[COLUMNS_SIZE], double dir[COLUMNS_SIZE],
 		double** V1, double** V2, double** V3, unsigned short rows,
 		Border border, LineType lineType, PlaneType planeType, bool fullReturn,
-		bool* intersect, double* t, double* u, double* v);//Returning values
+		bool* intersect, double* t, double* u, double* v); // Returning values
 
 #endif

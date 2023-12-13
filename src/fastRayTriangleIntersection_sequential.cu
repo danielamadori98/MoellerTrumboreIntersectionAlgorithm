@@ -1,6 +1,6 @@
 #include "../include/fastRayTriangleIntersection_sequential.h"
 
-void fastRayTriangleIntersection(
+void fastRayTriangleIntersection_sequential(
 		double orig[COLUMNS_SIZE], double dir[COLUMNS_SIZE],
 		double** V1, double** V2, double** V3, unsigned short rows,
 		Border border, LineType lineType, PlaneType planeType, bool fullReturn,

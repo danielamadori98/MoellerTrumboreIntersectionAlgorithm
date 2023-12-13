@@ -1,3 +1,0 @@
-/home/cuda06/MoellerTrumboreIntersectionAlgorithm/build/CMakeFiles/MoellerTrumboreIntersectionAlgorithm.dir
-/home/cuda06/MoellerTrumboreIntersectionAlgorithm/build/CMakeFiles/edit_cache.dir
-/home/cuda06/MoellerTrumboreIntersectionAlgorithm/build/CMakeFiles/rebuild_cache.dir

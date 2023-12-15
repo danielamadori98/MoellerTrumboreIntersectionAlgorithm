@@ -7,7 +7,10 @@
 
 #define COLUMNS_SIZE 3
 
-#define SEG_SIZE 32
+#define BLOCK_ROWS_SIZE 32
+
+#define V_BLOCK_SIZE (BLOCK_ROWS_SIZE * COLUMNS_SIZE)
+
 
 void check_visibility_parallel_code(
 	double camera_location[COLUMNS_SIZE],

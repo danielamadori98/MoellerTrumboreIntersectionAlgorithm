@@ -60,20 +60,20 @@ bool* check_visibility(
 	//Timer
 	timer::Timer<timer::HOST> host_TM;
 	timer::Timer<timer::DEVICE> dev_TM;
-
+	/*
 	host_TM.start();
 	check_visibility_sequential_code(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
 	host_TM.stop();
 	host_TM.print("MoellerTrumboreIntersectionAlgorithm host:   ");
 	check_results(visible, gt, verts_rows);
-
+	*/
 	dev_TM.start();
-	check_visibility_parallel_code(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
+	check_visibility_parallel_code_streams(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
 	dev_TM.stop();
 	dev_TM.print("MoellerTrumboreIntersectionAlgorithm device:   ");
 	check_results(visible, gt, verts_rows);
 
-	std::cout << "Speedup: " << host_TM.duration() / dev_TM.duration() << "x\n\n";
+	//std::cout << "Speedup: " << host_TM.duration() / dev_TM.duration() << "x\n\n";
 
 	for (unsigned short i = 0; i < meshes_rows; i++) {
 		delete[] V1[i];

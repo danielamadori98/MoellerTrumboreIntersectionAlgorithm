@@ -6,7 +6,6 @@ void check_visibility_sequential_code(
 	double** V1, double** V2, double** V3, unsigned short V_rows,
 	bool* flag, double* t, double* u, double* v, bool* visible) // Output variables
 {
-
 	for (unsigned short i = 0; i < verts_rows; i++) {
 		fastRayTriangleIntersection_sequential(camera_location, verts[i], V1, V2, V3, V_rows, Exclusive, Segment, TwoSided, false, flag, t, u, v);
 

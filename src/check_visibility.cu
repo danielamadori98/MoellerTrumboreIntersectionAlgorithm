@@ -1,13 +1,13 @@
 #include "../include/check_visibility.h"
 
-void check(bool* visible, bool** gt, unsigned short verts_rows) {
+void check_results(bool* visible, bool** gt, unsigned short verts_rows) {
 	bool error = false;
 	for(unsigned short i = 0; i < verts_rows; i++) {
 		if (visible[i] != gt[i][0]) {
 			error = true;
 			std::cerr << "Error in vertex " << i << std::endl;
 			std::cerr << "Expected: " << gt[i][0] << " - Obtained: " << visible[i] << std::endl;
-			return; //Remove this line to print all errors
+			//return; //Remove this line to print all errors
 		}
 	}
 	if(!error)
@@ -57,24 +57,23 @@ bool* check_visibility(
 	//the t in the matlab code was be replaced by the v to mantain the same name used in the fastRayTriangleIntersection function
 	double* t = new double[meshes_rows], *u = new double[meshes_rows], *v = new double[meshes_rows];
 
+	//Timer
+	timer::Timer<timer::HOST> host_TM;
+	timer::Timer<timer::DEVICE> dev_TM;
 
-	Timer<DEVICE> TM_device;
-	Timer<HOST>   TM_host;
+	host_TM.start();
+	check_visibility_sequential_code(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
+	host_TM.stop();
+	host_TM.print("MoellerTrumboreIntersectionAlgorithm host:   ");
+	check_results(visible, gt, verts_rows);
 
-	TM_host.start();
-	//check_visibility_sequential_code(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
-	TM_host.stop();
-	TM_host.print("MatrixTranspose host:   ");
-	//check(visible, gt, verts_rows);
-
-	TM_device.start();
+	dev_TM.start();
 	check_visibility_parallel_code(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
-	TM_device.stop();
-	CHECK_CUDA_ERROR
-		TM_device.print("MatrixTranspose device: ");
+	dev_TM.stop();
+	dev_TM.print("MoellerTrumboreIntersectionAlgorithm device:   ");
+	check_results(visible, gt, verts_rows);
 
-	std::cout << std::setprecision(1) << "Speedup: " << TM_host.duration() / TM_device.duration() << "x\n\n";
-	check(visible, gt, verts_rows);
+	std::cout << "Speedup: " << host_TM.duration() / dev_TM.duration() << "x\n\n";
 
 	for (unsigned short i = 0; i < meshes_rows; i++) {
 		delete[] V1[i];

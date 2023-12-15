@@ -105,6 +105,7 @@ void fastRayTriangleIntersection_sequential(
 		}
 	}
 
+	double qvec[COLUMNS_SIZE];
 	if (fullReturn) { //Calculate all variables for all line/triangle pairs
 		/*
 			qvec = cross(tvec, edge1,2);    % prepare to test V parameter
@@ -114,8 +115,6 @@ void fastRayTriangleIntersection_sequential(
 			% test if line/plane intersection is within the triangle
 			ok   = (angleOK & u>=-zero & v>=-zero & u+v<=1.0+zero);
 		*/
-		double *qvec = new double[COLUMNS_SIZE]; //Check qvec size, and also if needed fullReturn part
-
 		for (unsigned short i = 0; i < rows; i++) {
 			if (!intersect[i])
 				v[i] = NAN, t[i] = NAN;
@@ -150,8 +149,6 @@ void fastRayTriangleIntersection_sequential(
 			% test if line/plane intersection is within the triangle
 			ok = (ok & v>=-zero & u+v<=1.0+zero);
 		*/
-		double *qvec = new double[COLUMNS_SIZE];
-
 		for (unsigned short i = 0; i < rows; i++) {
 			intersect[i] = intersect[i] && u[i] >= -zero && u[i] <= 1 + zero;
 

@@ -6,15 +6,109 @@ void check_visibility_parallel_code(
 	double** V1, double** V2, double **V3, unsigned short V_rows,
 	bool* flag, double* t, double* u, double* v, bool* visible) // Output variables
 {
+	// Initialize CUDA
+	cudaError_t cudaStatus = cudaSetDevice(1);  // You can set the GPU device index as needed
+	if (cudaStatus != cudaSuccess)
+		std::cerr << "cudaSetDevice failed! Error: " << cudaGetErrorString(cudaStatus) << std::endl;
+
+	unsigned short segsNumber = (unsigned short)std::ceil(V_rows / SEG_SIZE);
+
 	// Creating the device variables
-	double *d_camera_location, * d_vert,
+	double* d_camera_location, * d_vert,
+		* d_V1, * d_V2, * d_V3,
+		* d_t, * d_u, * d_v;
+
+	bool* d_flag;
+
+	// Allocate memory for device variables and copy data from host to device
+	cudaMalloc((void**)&d_camera_location, COLUMNS_SIZE * sizeof(double));
+	cudaMalloc((void**)&d_vert, COLUMNS_SIZE * sizeof(double));
+	cudaMalloc((void**)&d_V1, SEG_SIZE * COLUMNS_SIZE * sizeof(double));
+	cudaMalloc((void**)&d_V2, SEG_SIZE * COLUMNS_SIZE * sizeof(double));
+	cudaMalloc((void**)&d_V3, SEG_SIZE * COLUMNS_SIZE * sizeof(double));
+	
+	cudaMalloc((void**)&d_flag, SEG_SIZE * sizeof(bool));
+	cudaMalloc((void**)&d_t, SEG_SIZE * sizeof(double));
+	cudaMalloc((void**)&d_u, SEG_SIZE * sizeof(double));
+	cudaMalloc((void**)&d_v, SEG_SIZE * sizeof(double));
+
+	dim3 blockDim(1, SEG_SIZE);
+	dim3 gridDim(segsNumber, 1);
+
+	double h_V1[SEG_SIZE * COLUMNS_SIZE], h_V2[SEG_SIZE * COLUMNS_SIZE], h_V3[SEG_SIZE * COLUMNS_SIZE];
+
+	cudaMemcpy(d_camera_location, camera_location, COLUMNS_SIZE * sizeof(double), cudaMemcpyHostToDevice);
+	for (unsigned short verts_row = 0, segs_index = 0, V_row = 0; verts_row < verts_rows; verts_row++) {
+		visible[verts_row] = true;
+
+		cudaMemcpy(d_vert, verts[verts_row], COLUMNS_SIZE * sizeof(double), cudaMemcpyHostToDevice);
+		for (segs_index = 0; segs_index < segsNumber && visible[verts_row]; segs_index++) {
+			V_row = segs_index * SEG_SIZE;
+			//std::cout << "segs_index = " << segs_index << "\n";
+
+			for (unsigned short row = 0; row < SEG_SIZE; row++)
+				for (unsigned short col = 0; col < COLUMNS_SIZE; col++) {
+					h_V1[row * COLUMNS_SIZE + col] = V1[V_row + row][col];
+					h_V2[row * COLUMNS_SIZE + col] = V2[V_row + row][col];
+					h_V3[row * COLUMNS_SIZE + col] = V3[V_row + row][col];
+				}
+			
+			//std::cout << "After copying V1, V2, V3, segs_index = " << segs_index << "\n";
+			
+			cudaMemcpy(d_V1, h_V1, SEG_SIZE * COLUMNS_SIZE * sizeof(double), cudaMemcpyHostToDevice);
+			cudaMemcpy(d_V2, h_V2, SEG_SIZE * COLUMNS_SIZE * sizeof(double), cudaMemcpyHostToDevice);
+			cudaMemcpy(d_V3, h_V3, SEG_SIZE * COLUMNS_SIZE * sizeof(double), cudaMemcpyHostToDevice);
+			
+			//std::cout << "After copying all, segs_index = " << segs_index << "\n";
+			
+			fastRayTriangleIntersection_parallel<<<gridDim, blockDim, 0>>>(
+				d_camera_location, d_vert,
+				d_V1, d_V2, d_V3, SEG_SIZE,
+				BORDER_EXCLUSIVE, LINE_TYPE_SEGMENT, PLANE_TYPE_TWOSIDED, false,
+				d_flag, d_t, d_u, d_v);
+			
+			cudaDeviceSynchronize();
+
+			//std::cout << "After kernel, segs_index = " << segs_index << "\n";
+
+			cudaMemcpy(flag + V_row, d_flag, SEG_SIZE * sizeof(bool), cudaMemcpyDeviceToHost);
+			cudaMemcpy(t + V_row, d_t, SEG_SIZE * sizeof(double), cudaMemcpyDeviceToHost);
+			cudaMemcpy(u + V_row, d_u, SEG_SIZE * sizeof(double), cudaMemcpyDeviceToHost);
+			cudaMemcpy(v + V_row, d_v, SEG_SIZE * sizeof(double), cudaMemcpyDeviceToHost);
+
+			//std::cout << "After copying back all, segs_index = " << segs_index << "\n";
+			
+			for (unsigned short k = V_row; k < V_row + SEG_SIZE; k++) {
+				if (flag[k]) {
+					visible[verts_row] = false;
+					break;
+				}
+			}
+		}
+		if(verts_row % 100 == 0)
+			std::cout << "Visible[" << verts_row << "] = " << visible[verts_row] << "\n";
+	}
+
+	cudaFree(d_camera_location), cudaFree(d_vert);
+	cudaFree(d_V1), cudaFree(d_V2), cudaFree(d_V3);
+	cudaFree(d_flag), cudaFree(d_t), cudaFree(d_u), cudaFree(d_v);
+}
+
+void check_visibility_parallel_code_streams(
+	double camera_location[COLUMNS_SIZE],
+	double** verts, unsigned short verts_rows,
+	double** V1, double** V2, double** V3, unsigned short V_rows,
+	bool* flag, double* t, double* u, double* v, bool* visible) // Output variables
+{
+	// Creating the device variables
+	double* d_camera_location, * d_vert,
 		** d_V1, ** d_V2, ** d_V3,
 		* d_t, * d_u, * d_v;
 
 	bool* d_flag;
 
 	// Initialize CUDA
-	cudaError_t cudaStatus = cudaSetDevice(0);  // You can set the GPU device index as needed
+	cudaError_t cudaStatus = cudaSetDevice(1);  // You can set the GPU device index as needed
 	if (cudaStatus != cudaSuccess)
 		std::cerr << "cudaSetDevice failed! Error: " << cudaGetErrorString(cudaStatus) << std::endl;
 
@@ -26,9 +120,11 @@ void check_visibility_parallel_code(
 
 	unsigned short maxStreams = deviceProp.asyncEngineCount;
 	//std::cout << "Maximum number of CUDA streams on GPU " << device << ": " << maxStreams << std::endl;
+	unsigned short segSize = 32, segsNumber = (unsigned short)std::round(V_rows / segSize);
+
 	//TODO remove
 	maxStreams = 1;
-	unsigned short segSize = 32, segsNumber = (unsigned short)std::round(V_rows / segSize);
+	segSize = V_rows;
 
 	// Allocate memory for device variables and copy data from host to device
 	cudaMalloc((void**)&d_camera_location, COLUMNS_SIZE * sizeof(double));
@@ -36,13 +132,13 @@ void check_visibility_parallel_code(
 	cudaMalloc((void**)&d_V1, segSize * COLUMNS_SIZE * sizeof(double));
 	cudaMalloc((void**)&d_V2, segSize * COLUMNS_SIZE * sizeof(double));
 	cudaMalloc((void**)&d_V3, segSize * COLUMNS_SIZE * sizeof(double));
-	
+
 	cudaMalloc((void**)&d_flag, segSize * sizeof(bool));
 	cudaMalloc((void**)&d_t, segSize * sizeof(double));
 	cudaMalloc((void**)&d_u, segSize * sizeof(double));
 	cudaMalloc((void**)&d_v, segSize * sizeof(double));
 
-	std::cout << "After Allocation\n";
+	//std::cout << "After Allocation\n";
 
 	// Creating the streams
 	dim3 blockDim(segSize, 1);
@@ -64,30 +160,30 @@ void check_visibility_parallel_code(
 
 		cudaMemcpyAsync(d_camera_location, camera_location, COLUMNS_SIZE * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[0]);
 		cudaMemcpyAsync(d_vert, vert, COLUMNS_SIZE * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[0]);
-		
-		for (segs_index = 0; segs_index < segsNumber && visible[verts_row]; segs_index++) {
+
+		for (segs_index = 0; segs_index < segsNumber /*&& visible[verts_row]*/; segs_index++) {
 			stream = segs_index % maxStreams;
 			V_row = segs_index * segSize;
 
 			cudaMemcpyAsync(d_V1, V1 + V_row, segSize * COLUMNS_SIZE * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[stream]);
 			cudaMemcpyAsync(d_V2, V2 + V_row, segSize * COLUMNS_SIZE * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[stream]);
 			cudaMemcpyAsync(d_V3, V3 + V_row, segSize * COLUMNS_SIZE * sizeof(double), cudaMemcpyHostToDevice, meshes_streams[stream]);
-			
+
 			//std::cout << "After copying all, j = " << j << "\n";
-			
-			fastRayTriangleIntersection_parallel<<<gridDim, blockDim, 0, meshes_streams[stream]>>>(
+			/*
+			fastRayTriangleIntersection_parallel << <gridDim, blockDim, 0, meshes_streams[stream] >> > (
 				d_camera_location, d_vert,
 				d_V1, d_V2, d_V3, segSize,
 				BORDER_EXCLUSIVE, LINE_TYPE_SEGMENT, PLANE_TYPE_TWOSIDED, false,
 				d_flag, d_t, d_u, d_v);
-			
+			*/
 			//std::cout << "After kernel, j = " << j << "\n";
 
 			cudaMemcpyAsync(flag + V_row, d_flag, segSize * sizeof(bool), cudaMemcpyDeviceToHost, meshes_streams[stream]);
 			cudaMemcpyAsync(t + V_row, d_t, segSize * sizeof(double), cudaMemcpyDeviceToHost, meshes_streams[stream]);
 			cudaMemcpyAsync(u + V_row, d_u, segSize * sizeof(double), cudaMemcpyDeviceToHost, meshes_streams[stream]);
 			cudaMemcpyAsync(v + V_row, d_v, segSize * sizeof(double), cudaMemcpyDeviceToHost, meshes_streams[stream]);
-			
+
 			//TODO check
 			cudaStreamSynchronize(meshes_streams[stream]);
 
@@ -99,7 +195,7 @@ void check_visibility_parallel_code(
 				}
 		}
 
-		std::cout << "After checking visibility, visible[" << verts_row << "] = " << visible[verts_row] << "\n";
+		//std::cout << "After checking visibility, visible[" << verts_row << "] = " << visible[verts_row] << "\n";
 	}
 
 	//Free memory
@@ -114,5 +210,5 @@ void check_visibility_parallel_code(
 	cudaFree(d_u);
 	cudaFree(d_v);
 
-	std::cout << "After freeing all\n";
+	//std::cout << "After freeing all\n";
 }

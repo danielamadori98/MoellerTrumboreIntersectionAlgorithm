@@ -126,12 +126,12 @@ void check_visibility_parallel_code_with_check(
 				cudaStreamSynchronize(streams[stream]);
 			}
 			// TODO: fix cudaStreamSyncronize work inside streams loop but not after it
-			/* 
+			
 			for(unsigned short stream = 0; stream < streams_size; stream++){
 				cudaStreamSynchronize(streams[stream]);
 				if (h_visible[stream] > 0) 
 					visible[verts_row] = false;
-			}*/
+			}
 		}
 
 		if (verts_row % 100 == 0)

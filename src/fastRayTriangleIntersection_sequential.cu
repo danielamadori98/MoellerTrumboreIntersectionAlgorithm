@@ -1,22 +1,21 @@
-#include "../include/fastRayTriangleIntersection_sequential.h"
+#include "../include/fastRayTriangleIntersection_sequential.hpp"
 
 void fastRayTriangleIntersection_sequential(
 		double orig[COLUMNS_SIZE], double dir[COLUMNS_SIZE],
 		double** V1, double** V2, double** V3, unsigned short rows,
-		Border border, LineType lineType, PlaneType planeType, bool fullReturn,
+		unsigned short border, unsigned short lineType, unsigned short planeType, bool fullReturn,
 		bool* intersect, double* t, double* u, double* v){
 
 	// Settings defaults values
 	double eps = 1e-5, zero;
 
-	switch (border) {// Read user preferences: lineType, border
-	case Normal:
+	switch (border) {
+	case BORDER_NORMAL:
 		zero = 0.0;
 		break;
-	case Inclusive:
+	case BORDER_INCLUSIVE:
 		zero = eps;
-		break;
-	case Exclusive:
+	case BORDER_EXCLUSIVE:
 		zero = -eps;
 		break;
 	default:
@@ -70,11 +69,12 @@ void fastRayTriangleIntersection_sequential(
 		error('Triangle parameter must be either "one sided" or "two sided"');
 	end
 	*/
-	if (planeType == TwoSided)
+
+	if (planeType == PLANE_TYPE_TWOSIDED)
 		for (unsigned short i = 0; i < rows; i++)
 			intersect[i] = abs(det[i]) > eps;
 
-	else if (planeType == OneSided)
+	else if (planeType == PLANE_TYPE_ONESIDED)
 		for (unsigned short i = 0; i < rows; i++)
 			intersect[i] = det[i] > eps;
 
@@ -84,6 +84,7 @@ void fastRayTriangleIntersection_sequential(
 		delete[] edge2;
 		delete[] tvec;
 		delete[] pvec;
+		delete[] det;
 
 		return;
 	}
@@ -165,7 +166,7 @@ void fastRayTriangleIntersection_sequential(
 				v[i] /= det[i];
 
 
-				if (lineType == Line)
+				if (lineType == LINE_TYPE_LINE)
 					t[i] = NAN;
 
 				else {
@@ -185,7 +186,7 @@ void fastRayTriangleIntersection_sequential(
 	delete[] edge2;
 	delete[] tvec;
 	delete[] pvec;
-
+	delete[] det;
 
 	/*
 		%% Test where along the line the line/plane intersection occurs
@@ -200,14 +201,15 @@ void fastRayTriangleIntersection_sequential(
 			error('lineType parameter must be either "line", "ray" or "segment"');
 		end
 	*/
+
 	switch (lineType) {
-	case Line:// Nothing to do
+	case LINE_TYPE_LINE:// Nothing to do
 		break;
-	case Ray:
+	case LINE_TYPE_RAY:
 		for (unsigned short i = 0; i < rows; i++)
 			intersect[i] = intersect[i] && t[i] >= -zero;
 		break;
-	case Segment:
+	case LINE_TYPE_SEGMENT:
 		for (unsigned short i = 0; i < rows; i++)
 			intersect[i] = intersect[i] && t[i] >= -zero && t[i] <= 1.0 + zero;
 		break;

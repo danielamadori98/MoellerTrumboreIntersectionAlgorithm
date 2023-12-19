@@ -1,9 +1,7 @@
-#ifndef CHECK_VISIBILITY_SEQUENTIAL_H
-#define CHECK_VISIBILITY_SEQUENTIAL_H
+#ifndef CHECK_VISIBILITY_SEQUENTIAL_HPP
+#define CHECK_VISIBILITY_SEQUENTIAL_HPP
 
-#include "fastRayTriangleIntersection_sequential.h"
-
-#define COLUMNS_SIZE 3
+#include "fastRayTriangleIntersection_sequential.hpp"
 
 void check_visibility_sequential_code(
 	double camera_location[COLUMNS_SIZE],

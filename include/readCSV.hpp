@@ -1,5 +1,5 @@
-﻿#ifndef CSV_READER_H
-#define CSV_READER_H
+﻿#ifndef CSV_READER_HPP
+#define CSV_READER_HPP
 
 #include <iostream>
 #include <fstream>

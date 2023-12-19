@@ -8,7 +8,7 @@ project (${PROJECT} LANGUAGES CXX CUDA)
 file(GLOB_RECURSE SOURCE_FILES
     "src/*.cu"
     "src/*.cpp"
-    "include/*.h"
+    "include/*.hpp"
     "include/*.cuh"
     "include/lib/*.hpp"
     "include/lib/*.cuh"

@@ -1,4 +1,4 @@
-#include "../include/check_visibility.h"
+#include "../include/check_visibility.hpp"
 
 void check_results(bool* visible, bool** gt, unsigned short verts_rows) {
 	bool error = false;
@@ -7,7 +7,7 @@ void check_results(bool* visible, bool** gt, unsigned short verts_rows) {
 			error = true;
 			std::cerr << "Error in vertex " << i << std::endl;
 			std::cerr << "Expected: " << gt[i][0] << " - Obtained: " << visible[i] << std::endl;
-			//return; //Remove this line to print all errors
+			//return; //Comment this line to print all errors
 		}
 	}
 	if(!error)
@@ -68,7 +68,7 @@ bool* check_visibility(
 	check_results(visible, gt, verts_rows);
 	*/
 	dev_TM.start();
-	check_visibility_parallel_code_streams(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
+	check_visibility_parallel_code_with_check(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
 	dev_TM.stop();
 	dev_TM.print("MoellerTrumboreIntersectionAlgorithm device:   ");
 	check_results(visible, gt, verts_rows);

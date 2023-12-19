@@ -1,5 +1,5 @@
-﻿#include "../include/readCSV.h"
-#include "../include/check_visibility.h"
+﻿#include "../include/readCSV.hpp"
+#include "../include/check_visibility.hpp"
 
 int main() {
 	std::string path = "../",

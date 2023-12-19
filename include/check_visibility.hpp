@@ -1,8 +1,8 @@
-#ifndef CHECK_VISIBILITY_H
-#define CHECK_VISIBILITY_H
+#ifndef CHECK_VISIBILITY_HPP
+#define CHECK_VISIBILITY_HPP
 
 #include "check_visibility_parallel.cuh"
-#include "check_visibility_sequential.h"
+#include "check_visibility_sequential.hpp"
 
 #include "lib/Timer.cuh"
 

@@ -2,22 +2,22 @@
 
 void check_visibility_sequential_code(
 	double camera_location[COLUMNS_SIZE],
-	double** verts, unsigned short verts_rows,
+	double* verts, unsigned short verts_rows,
 	double* V1, double* V2, double* V3, unsigned short V_rows,
 	bool* flag, double* t, double* u, double* v, bool* visible) // Output variables
 {
 
-	for (unsigned short i = 0; i < verts_rows; i++) {
+	for (unsigned short row = 0; row < verts_rows; row++) {
 		fastRayTriangleIntersection_sequential(
-			camera_location, verts[i],
+			camera_location, verts + row * COLUMNS_SIZE,
 			V1, V2, V3, V_rows,
 			BORDER_EXCLUSIVE, LINE_TYPE_SEGMENT, PLANE_TYPE_TWOSIDED, false,
 			flag, t, u, v);
 
-		visible[i] = true;
-		for (unsigned short j = 0; j < V_rows; j++)
-			if (flag[j]) {
-				visible[i] = false;
+		visible[row] = true;
+		for (unsigned short v_row = 0; v_row < V_rows; v_row++)
+			if (flag[v_row]) {
+				visible[row] = false;
 				break;
 			}
 	}

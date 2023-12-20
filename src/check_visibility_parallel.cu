@@ -78,9 +78,8 @@ double check_visibility_parallel_code(
 	timer::Timer<timer::DEVICE> dev_TM;
 	dev_TM.start();
 
+	unsigned short V_row, d_V_row;
 	for (unsigned short verts_row = 0, d_verts_row = 0; verts_row < verts_rows; verts_row++, d_verts_row += COLUMNS_SIZE) {
-
-		unsigned short V_row, d_V_row;
 		for (V_row = 0, d_V_row = 0; V_row < V_rows; V_row += BLOCK_ROWS_SIZE, d_V_row += V_BLOCK_SIZE) {
 			//std::cout << "V_row = " << V_row << "\n";
 

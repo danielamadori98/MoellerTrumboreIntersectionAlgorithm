@@ -21,65 +21,44 @@ bool* check_visibility(
 
 	double camera_location[COLUMNS_SIZE] = { 0, 0, 0 };
 
-	double** V1 = new double* [meshes_rows];
-	double** V2 = new double* [meshes_rows];
-	double** V3 = new double* [meshes_rows];
+	double	* V1 = new double [meshes_rows * COLUMNS_SIZE],
+			* V2 = new double[meshes_rows * COLUMNS_SIZE],
+			* V3 = new double[meshes_rows * COLUMNS_SIZE];
 
-	for (unsigned short i = 0; i < meshes_rows; i++) {
-		V1[i] = new double[COLUMNS_SIZE];
-		V2[i] = new double[COLUMNS_SIZE];
-		V3[i] = new double[COLUMNS_SIZE];
-
-		for (unsigned short j = 0; j < COLUMNS_SIZE; j++) {
-			V1[i][j] = verts[meshes[i][0]][j];
-			V2[i][j] = verts[meshes[i][1]][j];
-			V3[i][j] = verts[meshes[i][2]][j];
+	for (unsigned short row = 0; row < meshes_rows; row++)
+		for (unsigned short col = 0; col < COLUMNS_SIZE; col++) {
+			V1[row * COLUMNS_SIZE + col] = verts[meshes[row][0]][col];
+			V2[row * COLUMNS_SIZE + col] = verts[meshes[row][1]][col];
+			V3[row * COLUMNS_SIZE + col] = verts[meshes[row][2]][col];
 		}
-	}
-
-	/*
-	std::cout << "First 5 V1:" << std::endl;
-	for (unsigned short i = 0; i < 5; i++)
-		std::cout << V1[i][0] << ", " << V1[i][1] << ", " << V1[i][2] << std::endl;
-
-	std::cout << "First 5 V2:" << std::endl;
-	for (unsigned short i = 0; i < 5; i++)
-		std::cout << V2[i][0] << ", " << V2[i][1] << ", " << V2[i][2] << std::endl;
-
-	std::cout << "First 5 V3:" << std::endl;
-	for (unsigned short i = 0; i < 5; i++)
-		std::cout << V3[i][0] << ", " << V3[i][1] << ", " << V3[i][2] << std::endl;
-	*/
 
 	//Output variables
 
-	bool* flag = new bool[meshes_rows], *visible = new bool[verts_rows];
+	bool* flag = new bool[meshes_rows],
+		* visible = new bool[verts_rows];
+	
 	//the t in the matlab code was be replaced by the v to mantain the same name used in the fastRayTriangleIntersection function
-	double* t = new double[meshes_rows], *u = new double[meshes_rows], *v = new double[meshes_rows];
+	double	* t = new double[meshes_rows], 
+			* u = new double[meshes_rows],
+			* v = new double[meshes_rows];
 
 	//Timer
+	double time_h, time_d;
+	
 	timer::Timer<timer::HOST> host_TM;
-	timer::Timer<timer::DEVICE> dev_TM;
-	/*
+	
 	host_TM.start();
 	check_visibility_sequential_code(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
 	host_TM.stop();
+	time_h = host_TM.duration();
 	host_TM.print("MoellerTrumboreIntersectionAlgorithm host:   ");
 	check_results(visible, gt, verts_rows);
-	*/
-	dev_TM.start();
-	check_visibility_parallel_code_with_check(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
-	dev_TM.stop();
-	dev_TM.print("MoellerTrumboreIntersectionAlgorithm device:   ");
+	
+	time_d = check_visibility_parallel_code(camera_location, verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
 	check_results(visible, gt, verts_rows);
 
-	//std::cout << "Speedup: " << host_TM.duration() / dev_TM.duration() << "x\n\n";
+	std::cout << "Speedup: " <<  time_h / time_d  << "x\n\n";
 
-	for (unsigned short i = 0; i < meshes_rows; i++) {
-		delete[] V1[i];
-		delete[] V2[i];
-		delete[] V3[i];
-	}
 	delete[] V1;
 	delete[] V2;
 	delete[] V3;

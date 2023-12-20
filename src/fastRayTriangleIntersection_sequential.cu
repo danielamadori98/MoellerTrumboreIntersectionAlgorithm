@@ -2,7 +2,7 @@
 
 void fastRayTriangleIntersection_sequential(
 		double orig[COLUMNS_SIZE], double dir[COLUMNS_SIZE],
-		double** V1, double** V2, double** V3, unsigned short rows,
+		double* V1, double* V2, double* V3, unsigned short rows,
 		unsigned short border, unsigned short lineType, unsigned short planeType, bool fullReturn,
 		bool* intersect, double* t, double* u, double* v){
 
@@ -37,26 +37,28 @@ void fastRayTriangleIntersection_sequential(
 		*tvec = new double[rows][COLUMNS_SIZE], *pvec = new double[rows][COLUMNS_SIZE],
 		*det = new double[rows];
 	*/
-	double(*edge1)[COLUMNS_SIZE] = new double[rows][COLUMNS_SIZE];
-	double(*edge2)[COLUMNS_SIZE] = new double[rows][COLUMNS_SIZE];
-	double(*tvec)[COLUMNS_SIZE] = new double[rows][COLUMNS_SIZE];
-	double(*pvec)[COLUMNS_SIZE] = new double[rows][COLUMNS_SIZE];
-	double* det = new double[rows];
+	//Declaring edge1, edge2, tvec, pvec, det
+	double *edge1 = new double[rows * COLUMNS_SIZE],
+			*edge2 = new double[rows * COLUMNS_SIZE],
+			*tvec = new double[rows * COLUMNS_SIZE],
+			*pvec = new double[rows * COLUMNS_SIZE],
+			*det = new double[rows];
 
-	for (unsigned short i = 0; i < rows; i++) {
-		for (unsigned short j = 0; j < COLUMNS_SIZE; j++) {
-			edge1[i][j] = V2[i][j] - V1[i][j];
-			edge2[i][j] = V3[i][j] - V1[i][j];
-			tvec[i][j] = orig[j] - V1[i][j];
+
+	for (unsigned short row = 0; row < rows; row++) {
+		for (unsigned short col = 0; col < COLUMNS_SIZE; col++) {
+			edge1[row * COLUMNS_SIZE + col] = V2[row * COLUMNS_SIZE + col] - V1[row * COLUMNS_SIZE + col];
+			edge2[row * COLUMNS_SIZE + col] = V3[row * COLUMNS_SIZE + col] - V1[row * COLUMNS_SIZE + col];
+			tvec[row * COLUMNS_SIZE + col] = orig[col] - V1[row * COLUMNS_SIZE + col];
 		}
 
-		pvec[i][0] = dir[1] * edge2[i][2] - dir[2] * edge2[i][1];
-		pvec[i][1] = dir[2] * edge2[i][0] - dir[0] * edge2[i][2];
-		pvec[i][2] = dir[0] * edge2[i][1] - dir[1] * edge2[i][0];
+		pvec[row * COLUMNS_SIZE + 0] = dir[1] * edge2[row * COLUMNS_SIZE + 2] - dir[2] * edge2[row * COLUMNS_SIZE + 1];
+		pvec[row * COLUMNS_SIZE + 1] = dir[2] * edge2[row * COLUMNS_SIZE + 0] - dir[0] * edge2[row * COLUMNS_SIZE + 2];
+		pvec[row * COLUMNS_SIZE + 2] = dir[0] * edge2[row * COLUMNS_SIZE + 1] - dir[1] * edge2[row * COLUMNS_SIZE + 0];
 
-		det[i] = 0;
-		for (unsigned short j = 0; j < COLUMNS_SIZE; j++)
-			det[i] += edge1[i][j] * pvec[i][j];
+		det[row] = 0;
+		for (unsigned short col = 0; col < COLUMNS_SIZE; col++)
+			det[row] += edge1[row * COLUMNS_SIZE + col] * pvec[row * COLUMNS_SIZE + col];
 	}
 
 	/*
@@ -71,12 +73,12 @@ void fastRayTriangleIntersection_sequential(
 	*/
 
 	if (planeType == PLANE_TYPE_TWOSIDED)
-		for (unsigned short i = 0; i < rows; i++)
-			intersect[i] = abs(det[i]) > eps;
+		for (unsigned short row = 0; row < rows; row++)
+			intersect[row] = abs(det[row]) > eps;
 
 	else if (planeType == PLANE_TYPE_ONESIDED)
-		for (unsigned short i = 0; i < rows; i++)
-			intersect[i] = det[i] > eps;
+		for (unsigned short row = 0; row < rows; row++)
+			intersect[row] = det[row] > eps;
 
 	else {
 		std::cerr << "PlaneType parameter must be either 'two sided' or 'one sided'\n";
@@ -94,15 +96,15 @@ void fastRayTriangleIntersection_sequential(
 		det(~angleOK) = nan;              % change to avoid division by zero
 		u = sum(tvec.*pvec,2)./det;    % 1st barycentric coordinate
 	*/
-	for (unsigned short i = 0; i < rows; i++) {
-		if (!intersect[i])
-			u[i] = NAN;
+	for (unsigned short row = 0; row < rows; row++) {
+		if (!intersect[row])
+			u[row] = NAN;
 		else {
-			u[i] = 0;
-			for (unsigned short j = 0; j < COLUMNS_SIZE; j++)
-				u[i] += tvec[i][j] * pvec[i][j];
+			u[row] = 0;
+			for (unsigned short col = 0; col < COLUMNS_SIZE; col++)
+				u[row] += tvec[row * COLUMNS_SIZE + col] * pvec[row * COLUMNS_SIZE + col];
 
-			u[i] /= det[i];
+			u[row] /= det[row];
 		}
 	}
 
@@ -116,25 +118,25 @@ void fastRayTriangleIntersection_sequential(
 			% test if line/plane intersection is within the triangle
 			ok   = (angleOK & u>=-zero & v>=-zero & u+v<=1.0+zero);
 		*/
-		for (unsigned short i = 0; i < rows; i++) {
-			if (!intersect[i])
-				v[i] = NAN, t[i] = NAN;
+		for (unsigned short row = 0; row < rows; row++) {
+			if (!intersect[row])
+				v[row] = NAN, t[row] = NAN;
 
 			else {
-				qvec[0] = tvec[i][1] * edge1[i][2] - tvec[i][2] * edge1[i][1];
-				qvec[1] = tvec[i][2] * edge1[i][0] - tvec[i][0] * edge1[i][2];
-				qvec[2] = tvec[i][0] * edge1[i][1] - tvec[i][1] * edge1[i][0];
+				qvec[0] = tvec[row * COLUMNS_SIZE + 1] * edge1[row * COLUMNS_SIZE + 2] - tvec[row * COLUMNS_SIZE + 2] * edge1[row * COLUMNS_SIZE + 1];
+				qvec[1] = tvec[row * COLUMNS_SIZE + 2] * edge1[row * COLUMNS_SIZE + 0] - tvec[row * COLUMNS_SIZE + 0] * edge1[row * COLUMNS_SIZE + 2];
+				qvec[2] = tvec[row * COLUMNS_SIZE + 0] * edge1[row * COLUMNS_SIZE + 1] - tvec[row * COLUMNS_SIZE + 1] * edge1[row * COLUMNS_SIZE + 0];
 
-				v[i] = t[i] = 0;
-				for (unsigned short j = 0; j < COLUMNS_SIZE; j++) {
-					v[i] += dir[j] * qvec[j];
-					t[i] += edge2[i][j] * qvec[j];
+				v[row] = t[row] = 0;
+				for (unsigned short col = 0; col < COLUMNS_SIZE; col++) {
+					v[row] += dir[col] * qvec[col];
+					t[row] += edge2[row * COLUMNS_SIZE + col] * qvec[col];
 				}
 
-				v[i] /= det[i];
-				t[i] /= det[i];
+				v[row] /= det[row];
+				t[row] /= det[row];
 
-				intersect[i] = u[i] >= -zero && v[i] >= -zero && u[i] + v[i] <= 1.0 + zero;
+				intersect[row] = u[row] >= -zero && v[row] >= -zero && u[row] + v[row] <= 1.0 + zero;
 			}
 		}
 	}
@@ -150,34 +152,35 @@ void fastRayTriangleIntersection_sequential(
 			% test if line/plane intersection is within the triangle
 			ok = (ok & v>=-zero & u+v<=1.0+zero);
 		*/
-		for (unsigned short i = 0; i < rows; i++) {
-			intersect[i] = intersect[i] && u[i] >= -zero && u[i] <= 1 + zero;
+		for (unsigned short row = 0; row < rows; row++) {
+			intersect[row] = intersect[row] && u[row] >= -zero && u[row] <= 1 + zero;
 
-			if (!intersect[i])
-				v[i] = NAN;
+			if (!intersect[row])
+				v[row] = NAN;
 			else {
-				qvec[0] = tvec[i][1] * edge1[i][2] - tvec[i][2] * edge1[i][1];
-				qvec[1] = tvec[i][2] * edge1[i][0] - tvec[i][0] * edge1[i][2];
-				qvec[2] = tvec[i][0] * edge1[i][1] - tvec[i][1] * edge1[i][0];
+				qvec[0] = tvec[row * COLUMNS_SIZE + 1] * edge1[row * COLUMNS_SIZE + 2] - tvec[row * COLUMNS_SIZE + 2] * edge1[row * COLUMNS_SIZE + 1];
+				qvec[1] = tvec[row * COLUMNS_SIZE + 2] * edge1[row * COLUMNS_SIZE + 0] - tvec[row * COLUMNS_SIZE + 0] * edge1[row * COLUMNS_SIZE + 2];
+				qvec[2] = tvec[row * COLUMNS_SIZE + 0] * edge1[row * COLUMNS_SIZE + 1] - tvec[row * COLUMNS_SIZE + 1] * edge1[row * COLUMNS_SIZE + 0];
 
-				v[i] = 0;
-				for (unsigned short j = 0; j < COLUMNS_SIZE; j++)
-					v[i] += dir[j] * qvec[j];
-				v[i] /= det[i];
+
+				v[row] = 0;
+				for (unsigned short col = 0; col < COLUMNS_SIZE; col++)
+					v[row] += dir[col] * qvec[col];
+				v[row] /= det[row];
 
 
 				if (lineType == LINE_TYPE_LINE)
-					t[i] = NAN;
+					t[row] = NAN;
 
 				else {
-					t[i] = 0;
-					for (unsigned short j = 0; j < COLUMNS_SIZE; j++)
-						t[i] += edge2[i][j] * qvec[j];
+					t[row] = 0;
+					for (unsigned short col = 0; col < COLUMNS_SIZE; col++)
+						t[row] += edge2[row * COLUMNS_SIZE + col] * qvec[col];
 
-					t[i] /= det[i];
+					t[row] /= det[row];
 				}
 
-				intersect[i] = v[i] >= -zero && u[i] + v[i] <= 1.0 + zero;
+				intersect[row] = v[row] >= -zero && u[row] + v[row] <= 1.0 + zero;
 			}
 		}
 	}

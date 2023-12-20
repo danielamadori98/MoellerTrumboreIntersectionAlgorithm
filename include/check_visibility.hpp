@@ -4,7 +4,6 @@
 #include "check_visibility_parallel.cuh"
 #include "check_visibility_sequential.hpp"
 
-#include "lib/Timer.cuh"
 
 void check_results(bool* visible, bool** gt, unsigned short verts_rows);
 

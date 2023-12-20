@@ -1,19 +1,5 @@
 #include "../include/fastRayTriangleIntersection_parallel.cuh"
 
-inline cudaError_t checkCuda(cudaError_t result)
-{
-#if defined(DEBUG) || defined(_DEBUG)
-	if (result != cudaSuccess) {
-		fprintf(stderr, "CUDA Runtime Error: %s\n",
-			cudaGetErrorString(result));
-		assert(result == cudaSuccess);
-	}
-#endif
-	return result;
-}
-
-
-
 /*
 __device__ void cross(double* a, double* b, double* result) {
 	result[0] = a[1] * b[2] - a[2] * b[1];
@@ -32,12 +18,6 @@ __global__ void fastRayTriangleIntersection_parallel(
 		col = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (row < rows && col < 1) {
-		//Print V1
-		//printf("V1[%d][%d] = %f\n", row, col, V1[row * COLUMNS_SIZE + col]);
-
-		//printf("Col %d\n", col);
-		//printf("Row %d\n", row);
-
 		double eps = 1e-5, zero;
 		
 		switch (border) {
@@ -53,15 +33,7 @@ __global__ void fastRayTriangleIntersection_parallel(
 				printf("Error: border must be either BORDER_NORMAL, BORDER_INCLUSIVE or BORDER_EXCLUSIVE\n");
 				return;
 		}
-		
-		/*
-		Shared Mem SIZE :
-			edge1, edge2, tvec, pvec: 4 * 32 * 3 = 384
-			det: 32 = 64
-			qvec: 3 = 3
-		TOT = 451
-		*/
-		
+				
 		double edge1[ROWS_SIZE * COLUMNS_SIZE], edge2[ROWS_SIZE * COLUMNS_SIZE],
 			tvec[ROWS_SIZE * COLUMNS_SIZE], pvec[ROWS_SIZE * COLUMNS_SIZE],
 			det[ROWS_SIZE] = {0};
@@ -176,17 +148,7 @@ __global__ void fastRayTriangleIntersection_parallel_with_check(
 	int row = blockIdx.y * blockDim.y + threadIdx.y,
 		col = blockIdx.x * blockDim.x + threadIdx.x;
 
-	if (row < rows && col < 1) {
-		//Print V1
-		//printf("V1[%d][%d] = %f\n", row, col, V1[row * COLUMNS_SIZE + col]);
-
-		//printf("Col %d\n", col);
-		//printf("Row %d\n", row);
-
-		*visible = 0;
-
-		__syncthreads();
-
+	if (row < rows && col < 1 && *visible == 0) {
 		double eps = 1e-5, zero;
 
 		switch (border) {
@@ -306,12 +268,7 @@ __global__ void fastRayTriangleIntersection_parallel_with_check(
 			return;
 		}
 
-		__syncthreads();
-
-		if (intersect[row]) {
+		if (intersect[row])
 			(*visible)++;
-			//printf("Found intersection by thread %d\n", row);
-			return;
-		}
 	}
 }

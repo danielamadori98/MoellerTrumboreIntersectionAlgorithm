@@ -1,15 +1,12 @@
 #include "../include/check_visibility.hpp"
 
 void check_results(bool* visible, bool** gt, unsigned short verts_rows) {
-	bool error = false;
-	for(unsigned short i = 0; i < verts_rows; i++) {
+	for(unsigned short i = 0; i < verts_rows; i++)
 		if (visible[i] != gt[i][0]) {
-			error = true;
 			std::cerr << "Error in vertex " << i << std::endl;
 			std::cerr << "Expected: " << gt[i][0] << " - Obtained: " << visible[i] << std::endl;
 			//return; //Comment this line to print all errors
 		}
-	}
 }
 
 bool* check_visibility(

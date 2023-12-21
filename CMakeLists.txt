@@ -4,7 +4,6 @@ set(PROJECT "MoellerTrumboreIntersectionAlgorithm")
 
 project (${PROJECT} LANGUAGES CXX CUDA)
 
-
 file(GLOB_RECURSE SOURCE_FILES
     "src/*.cu"
     "src/*.cpp"
@@ -14,10 +13,13 @@ file(GLOB_RECURSE SOURCE_FILES
     "include/lib/*.cuh"
 )
 
-add_executable (MoellerTrumboreIntersectionAlgorithm ${SOURCE_FILES})
+add_executable(MoellerTrumboreIntersectionAlgorithm ${SOURCE_FILES})
 
 set(CUDA_ARCHITECTURES 75)
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET MoellerTrumboreIntersectionAlgorithm PROPERTY CXX_STANDARD 20 CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
 endif()
+
+# Explicitly set CUDA_ARCHITECTURES property
+set_property(TARGET MoellerTrumboreIntersectionAlgorithm PROPERTY CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})

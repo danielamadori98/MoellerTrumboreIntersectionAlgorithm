@@ -131,17 +131,18 @@ __global__ void fastRayTriangleIntersection_parallel(
 }
 
 __global__ void fastRayTriangleIntersection_parallel_with_check(
-	double orig[COLUMNS_SIZE], double dir[COLUMNS_SIZE],
-	double* V1, double* V2, double* V3, unsigned short rows,
-	unsigned short border, unsigned short lineType, unsigned short planeType, bool fullReturn,
+	const double* orig, const double* dir,
+	const double* V1, const double* V2, const double* V3, const unsigned short rows,
+	const unsigned short border, const unsigned short lineType, const unsigned short planeType, const bool fullReturn,
 	bool* intersect, double* t, double* u, double* v,
 	unsigned short* visible)
 {
 	int row = blockIdx.y * blockDim.y + threadIdx.y,
 		col = blockIdx.x * blockDim.x + threadIdx.x;
 
-	if (row < rows && col < 1 && *visible == 0) {
-		double eps = 1e-5, zero;
+	if (*visible == 0 && row < rows && col < 1) {
+		const double eps = 1e-5;
+		double zero;
 
 		switch (border) {
 		case BORDER_NORMAL:
@@ -264,6 +265,6 @@ __global__ void fastRayTriangleIntersection_parallel_with_check(
 		}
 
 		if (intersect[row])
-			(*visible)++;
+			(*visible)++;		
 	}
 }

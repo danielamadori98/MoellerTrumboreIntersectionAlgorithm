@@ -10,8 +10,6 @@ void check_results(bool* visible, bool** gt, unsigned short verts_rows) {
 			//return; //Comment this line to print all errors
 		}
 	}
-	if(!error)
-		std::cout << "All vertices are correctly classified" << std::endl;
 }
 
 bool* check_visibility(

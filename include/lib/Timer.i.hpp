@@ -37,6 +37,7 @@
 #include <cmath>            //std::sqrt
 #include <ctime>            //std::clock
 #include <iomanip>          //std::setprecision
+#include <iostream>         //std::cout
 #include <ratio>            //std::ratio
 #if defined(__linux__)
     #include <sys/times.h>  //::times

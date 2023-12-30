@@ -9,7 +9,7 @@ void check_results(bool* visible, bool** gt, unsigned short verts_rows) {
 		}
 }
 
-bool* check_visibility(
+void check_visibility(
 	double** verts, unsigned short verts_rows,
 	unsigned short** meshes, unsigned short meshes_rows,
 	bool** gt){
@@ -34,20 +34,25 @@ bool* check_visibility(
 		}
 
 	//Output variables
+	bool* visible = new bool[verts_rows];
 
-	bool* flag = new bool[meshes_rows],
-		* visible = new bool[verts_rows];
+	//Timer
+	double time_h, time_d;
+
+	timer::Timer<timer::HOST> host_TM;
+
+
+	//Check if FULL_RETURN is defined
+#ifdef FULL_RETURN
+
+	bool* flag = new bool[meshes_rows];
 	
+	//Output variables for FULL_RETURN
 	//the t in the matlab code was be replaced by the v to mantain the same name used in the fastRayTriangleIntersection function
 	double	* t = new double[meshes_rows], 
 			* u = new double[meshes_rows],
 			* v = new double[meshes_rows];
 
-	//Timer
-	double time_h, time_d;
-	
-	timer::Timer<timer::HOST> host_TM;
-	
 	host_TM.start();
 	check_visibility_sequential_code(camera_location, h_verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
 	host_TM.stop();
@@ -58,7 +63,24 @@ bool* check_visibility(
 	time_d = check_visibility_parallel_code(camera_location, h_verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
 	check_results(visible, gt, verts_rows);
 
-	std::cout << "Speedup: " <<  time_h / time_d  << "x\n\n";
+	delete[] t;
+	delete[] u;
+	delete[] v;
+	delete[] flag;
+
+#else
+
+	host_TM.start();
+	check_visibility_sequential_code(camera_location, h_verts, verts_rows, V1, V2, V3, meshes_rows, visible);
+	host_TM.stop();
+	time_h = host_TM.duration();
+	host_TM.print("MoellerTrumboreIntersectionAlgorithm host:   ");
+	check_results(visible, gt, verts_rows);
+
+	time_d = check_visibility_parallel_code(camera_location, h_verts, verts_rows, V1, V2, V3, meshes_rows, visible);
+	check_results(visible, gt, verts_rows);
+
+#endif
 
 	delete[] h_verts;
 
@@ -66,10 +88,7 @@ bool* check_visibility(
 	delete[] V2;
 	delete[] V3;
 
-	delete[] t;
-	delete[] u;
-	delete[] v;
-	delete[] flag;
+	delete[] visible;
 
-	return visible;
+	std::cout << "Speedup: " <<  time_h / time_d  << "x\n\n";
 }

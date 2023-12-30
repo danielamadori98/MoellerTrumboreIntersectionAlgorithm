@@ -1,6 +1,21 @@
 ﻿#include "../include/readCSV.hpp"
 #include "../include/check_visibility.hpp"
 
+
+/*
+int main(int argc, char** argv) {
+	if (argc != 4) {
+		std::cerr << "Usage: " << argv[0] << " <verts.csv> <meshes.csv> <ground_truth.csv>" << std::endl;
+		return -1;
+	}
+
+	std::string vertsFilename = argv[1],
+		meshesFilename = argv[2],
+		ground_truth = argv[3];
+
+	std::cout << "Reading files: " << vertsFilename << ", " << meshesFilename << ", " << ground_truth << std::endl;
+*/
+
 int main() {
 	std::string path = "../",
 		vertsFilename = path + "rotated_verts.csv",
@@ -28,8 +43,7 @@ int main() {
 		return -1;
 	}
 
-	
-	bool* visible = check_visibility(verts, verts_rows, meshes, meshes_rows, gt);
+	check_visibility(verts, verts_rows, meshes, meshes_rows, gt);
 
 	for (unsigned short i = 0; i < verts_rows; i++)
 		delete[] verts[i];

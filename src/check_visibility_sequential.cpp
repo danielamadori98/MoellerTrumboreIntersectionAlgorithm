@@ -11,7 +11,7 @@ void check_visibility_sequential_code(
 		fastRayTriangleIntersection_sequential(
 			camera_location, verts + row * COLUMNS_SIZE,
 			V1, V2, V3, V_rows,
-			BORDER_EXCLUSIVE, LINE_TYPE_SEGMENT, PLANE_TYPE_TWOSIDED, false,
+			BORDER_EXCLUSIVE, LINE_TYPE_SEGMENT, PLANE_TYPE_TWOSIDED,
 			flag, t, u, v);
 
 		visible[row] = true;
@@ -21,4 +21,31 @@ void check_visibility_sequential_code(
 				break;
 			}
 	}
+}
+
+
+void check_visibility_sequential_code(
+	double camera_location[COLUMNS_SIZE],
+	double* verts, unsigned short verts_rows,
+	double* V1, double* V2, double* V3, unsigned short V_rows,
+	bool* visible) // Output variable
+{
+
+	bool* flag = new bool[V_rows];
+	for (unsigned short row = 0; row < verts_rows; row++) {
+		fastRayTriangleIntersection_sequential(
+			camera_location, verts + row * COLUMNS_SIZE,
+			V1, V2, V3, V_rows,
+			BORDER_EXCLUSIVE, LINE_TYPE_SEGMENT, PLANE_TYPE_TWOSIDED,
+			flag);
+
+		visible[row] = true;
+		for (unsigned short v_row = 0; v_row < V_rows; v_row++)
+			if (flag[v_row]) {
+				visible[row] = false;
+				break;
+			}
+	}
+
+	delete[] flag;
 }

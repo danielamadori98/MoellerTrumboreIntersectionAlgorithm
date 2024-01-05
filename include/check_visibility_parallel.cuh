@@ -4,7 +4,6 @@
 #include "fastRayTriangleIntersection_parallel.cuh"
 #include "lib/Timer.cuh"
 #include <iostream>
-//#include "lib/CheckError.cuh" //TODO FIX: problem with multiple definitions of CheckError, SAFE_CALL, etc.
 
 double check_visibility_parallel_code(
 	double camera_location[COLUMNS_SIZE],

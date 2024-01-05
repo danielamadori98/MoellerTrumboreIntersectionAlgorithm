@@ -1,6 +1,6 @@
 #include "../include/fastRayTriangleIntersection_parallel.cuh"
 
-__global__ void fastRayTriangleIntersection_parallel(
+__global__ void fastRayTriangleIntersection_parallel_full_return(
 	const double* orig, const double* dir,
 	const double* V1, const double* V2, const double* V3, const unsigned short rows,
 	const unsigned short border, const unsigned short lineType, const unsigned short planeType,
@@ -235,10 +235,7 @@ __global__ void fastRayTriangleIntersection_parallel(
 			return;
 		}
 
-		//__syncthreads();
-
 		if (intersect[row])
-			atomicAdd(visible, 1);
-		//(*visible)++;		
+			atomicAdd(visible, 1);	
 	}
 }

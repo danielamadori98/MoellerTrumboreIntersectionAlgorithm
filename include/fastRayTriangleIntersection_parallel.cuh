@@ -12,10 +12,13 @@
 
 // x: SHARED_MEM_SIZE / MAX_SPACE_COST
 // y: multiple used to round down x to the nearest multiple of y
-#define MAX_BLOCK_ROWS_SIZE(x, y) ((x) / (y) * (y))
+#define WARP_SIZE 32
+#define MAX_BLOCK_ROWS_SIZE(x) ((x) / WARP_SIZE * WARP_SIZE)
 
 
-/* Space cost
+/* fastRayTriangleIntersection_parallel_full_return:
+* 
+* Space cost:
 *
 * First Part :
 * pvec		= COLUMNS_SIZE * BLOCK_ROWS_SIZE * sizeof(double)
@@ -40,15 +43,16 @@
 
 #define MAX_SPACE_COST_FULL_RETURN (SPACE_COST_FIRST_PART_FULL_RETURN > SPACE_COST_SECOND_PART_FULL_RETURN ? SPACE_COST_FIRST_PART_FULL_RETURN : SPACE_COST_SECOND_PART_FULL_RETURN)
 
-
-__global__ void fastRayTriangleIntersection_parallel(
+__global__ void fastRayTriangleIntersection_parallel_full_return(
 	const double* orig, const double* dir,
 	const double* V1, const double* V2, const double* V3, const unsigned short rows,
 	const unsigned short border, const unsigned short lineType, const unsigned short planeType,
 	bool* intersect, double* t, double* u, double* v, unsigned int* visible); // Output variables
 
 
-/* Space cost : (All double except intersect)
+/* fastRayTriangleIntersection_parallel
+*
+* Space cost : (All double except intersect that is bool)
 *
 * First Part :
 * pvec		= COLUMNS_SIZE * BLOCK_ROWS_SIZE * sizeof(double)

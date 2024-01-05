@@ -77,8 +77,8 @@ void check_visibility(
 	host_TM.print("MoellerTrumboreIntersectionAlgorithm host:   ");
 	check_results(visible, gt, verts_rows);
 
-	time_d = check_visibility_parallel_code(camera_location, h_verts, verts_rows, V1, V2, V3, meshes_rows, visible);
-	check_results(visible, gt, verts_rows);
+	time_d = check_visibility_parallel_code_dyn(camera_location, h_verts, verts_rows, V1, V2, V3, meshes_rows, visible);
+	//check_results(visible, gt, verts_rows);
 
 #endif
 

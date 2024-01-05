@@ -85,5 +85,12 @@ __global__ void fastRayTriangleIntersection_parallel(
 	const unsigned short border, const unsigned short lineType, const unsigned short planeType,
 	unsigned int* visible); // Output variable
 
+__global__ void fastRayTriangleIntersection_parallel_dyn(
+	const double* orig, const double* dir,
+	const double* V1, const double* V2, const double* V3, const unsigned short rows,
+	const unsigned short max_block_rows_size,
+	const unsigned short border, const unsigned short lineType, const unsigned short planeType,
+	unsigned int* visible); // Output variable
+
 
 #endif

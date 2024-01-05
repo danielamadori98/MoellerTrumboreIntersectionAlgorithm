@@ -242,3 +242,177 @@ __global__ void fastRayTriangleIntersection_parallel(
 		//(*visible)++;		
 	}
 }
+
+
+__global__ void fastRayTriangleIntersection_parallel_dyn(
+	const double* orig, const double* dir,
+	const double* V1, const double* V2, const double* V3, const unsigned short rows,
+	const unsigned short max_rows_size,
+	const unsigned short border, const unsigned short lineType, const unsigned short planeType,
+	unsigned int* visible)
+{
+	int row = blockIdx.y * blockDim.y + threadIdx.y,
+		col = blockIdx.x * blockDim.x + threadIdx.x;
+
+	if (*visible == 0 && row < rows && col < 1) {
+		const double eps = 1e-5;
+		double zero;
+
+		switch (border) {
+		case BORDER_NORMAL:
+			zero = 0.0;
+			break;
+		case BORDER_INCLUSIVE:
+			zero = eps;
+		case BORDER_EXCLUSIVE:
+			zero = -eps;
+			break;
+		default:
+			printf("Error: border must be either BORDER_NORMAL, BORDER_INCLUSIVE or BORDER_EXCLUSIVE\n");
+			return;
+		}
+
+		extern __shared__ double sm[];
+
+		const unsigned short ROWS_COLUMNS_SIZE = max_rows_size * COLUMNS_SIZE;
+		
+		// Scope: All Parts
+		double* edge1 = sm;							//SIZE: ROWS_COLUMNS_SIZE
+		double* edge2 = &edge1[2* ROWS_COLUMNS_SIZE];	//SIZE: ROWS_COLUMNS_SIZE
+		
+		double* tvec = &edge2[ROWS_COLUMNS_SIZE];	//SIZE: ROWS_COLUMNS_SIZE
+		double* det	 = &tvec[ROWS_COLUMNS_SIZE];	//SIZE: max_rows_size
+
+		if (row == 0) {
+			printf("Max block rows size: %d\n\n", max_rows_size);
+			printf("ROWS_COLUMNS_SIZE: %d\n\n", ROWS_COLUMNS_SIZE);
+
+			printf("edge1: [%p - %p] size: %d, next: %p\n",
+				edge1, &edge1[ROWS_COLUMNS_SIZE - 1], &edge1[ROWS_COLUMNS_SIZE] - edge1, &edge1[ROWS_COLUMNS_SIZE]);
+			printf("edge2: [%p - %p] size: %d, next: %p\n",
+				edge2, &edge2[ROWS_COLUMNS_SIZE - 1], &edge2[ROWS_COLUMNS_SIZE] - edge2, &edge2[ROWS_COLUMNS_SIZE]);
+			printf("tvec: [%p - %p] size: %d, next: %p\n",
+				tvec, &tvec[ROWS_COLUMNS_SIZE - 1], &tvec[ROWS_COLUMNS_SIZE] - tvec, &tvec[ROWS_COLUMNS_SIZE]);
+			printf("det: [%p - %p] size: %d, next: %p\n",
+				det, &det[ROWS_COLUMNS_SIZE - 1], &det[ROWS_COLUMNS_SIZE] - det, (bool*)&det[max_rows_size]);
+
+		}
+		 
+		for (col = 0; col < COLUMNS_SIZE; col++) {
+			edge1[row * COLUMNS_SIZE + col] = V2[row * COLUMNS_SIZE + col] - V1[row * COLUMNS_SIZE + col];
+			edge2[row * COLUMNS_SIZE + col] = V3[row * COLUMNS_SIZE + col] - V1[row * COLUMNS_SIZE + col];
+			tvec[row * COLUMNS_SIZE + col] = orig[col] - V1[row * COLUMNS_SIZE + col];
+		}
+
+		// Scope: All Parts
+		bool* intersect = (bool*)&det[max_rows_size];	//SIZE: max_rows_size
+		double* u = (double*)&intersect[max_rows_size];	//SIZE: max_rows_size
+
+		if (row == 0) {
+			printf("intersect: [%p - %p] size: %d, next: %p\n",
+				intersect, &intersect[max_rows_size - 1], &intersect[max_rows_size] - intersect, (double*)&intersect[max_rows_size]);
+			printf("u: [%p - %p] size: %d, next: %p\n",
+				u, &u[max_rows_size - 1], &u[max_rows_size] - u, &u[max_rows_size]);
+		}
+
+		{// Scope: First Parst: pvec is used only in this block, limiting its scope
+			double* pvec = &u[max_rows_size];	//SIZE: ROWS_COLUMNS_SIZE
+			if (row == 0) {
+				printf("pvec: [%p - %p] size: %d, next: %p\n",
+					pvec, &pvec[ROWS_COLUMNS_SIZE - 1], &pvec[ROWS_COLUMNS_SIZE] - pvec, &pvec[ROWS_COLUMNS_SIZE]);
+			}
+
+			pvec[row * COLUMNS_SIZE] = dir[1] * edge2[row * COLUMNS_SIZE + 2] - dir[2] * edge2[row * COLUMNS_SIZE + 1];
+			pvec[row * COLUMNS_SIZE + 1] = dir[2] * edge2[row * COLUMNS_SIZE] - dir[0] * edge2[row * COLUMNS_SIZE + 2];
+			pvec[row * COLUMNS_SIZE + 2] = dir[0] * edge2[row * COLUMNS_SIZE + 1] - dir[1] * edge2[row * COLUMNS_SIZE];
+
+			det[row] = edge1[row * COLUMNS_SIZE] * pvec[row * COLUMNS_SIZE];
+			for (col = 1; col < COLUMNS_SIZE; col++)
+				det[row] += edge1[row * COLUMNS_SIZE + col] * pvec[row * COLUMNS_SIZE + col];
+
+
+			if (planeType == PLANE_TYPE_TWOSIDED)
+				intersect[row] = abs(det[row]) > eps;
+			else if (planeType == PLANE_TYPE_ONESIDED)
+				intersect[row] = det[row] > eps;
+			else {
+				printf("Error: planeType must be either PLANE_TYPE_TWOSIDED or PLANE_TYPE_ONESIDED\n");
+				return;
+			}
+
+
+			if (!intersect[row])
+				u[row] = NAN;
+			else {
+				u[row] = tvec[row * COLUMNS_SIZE] * pvec[row * COLUMNS_SIZE];
+				for (col = 1; col < COLUMNS_SIZE; col++)
+					u[row] += tvec[row * COLUMNS_SIZE + col] * pvec[row * COLUMNS_SIZE + col];
+
+				u[row] /= det[row];
+			}
+
+			intersect[row] = intersect[row] && u[row] >= -zero && u[row] <= 1 + zero;
+
+		}//pvec is not used anymore
+
+		__syncthreads();
+
+		// Second Part: t, v, qvec are used only in this block, limiting their scope
+		double* t = &u[max_rows_size];		//SIZE: max_rows_size
+		double* v = &t[max_rows_size];		//SIZE: max_rows_size
+		double* qvec = &v[max_rows_size];	//SIZE: ROWS_COLUMNS_SIZE
+		if(row == 0){
+			printf("t: [%p - %p] size: %d, next: %p\n",
+				t, &t[max_rows_size - 1], &t[max_rows_size] - t, &t[max_rows_size]);
+			printf("v: [%p - %p] size: %d, next: %p\n",
+				v, &v[max_rows_size - 1], &v[max_rows_size] - v, &v[max_rows_size]);
+			printf("qvec: [%p - %p] size: %d, next: %p\n",
+				qvec, &qvec[ROWS_COLUMNS_SIZE - 1], &qvec[ROWS_COLUMNS_SIZE] - qvec, &qvec[ROWS_COLUMNS_SIZE]);
+		}
+
+
+		if (intersect[row]) {
+			qvec[row] = tvec[row * COLUMNS_SIZE + 1] * edge1[row * COLUMNS_SIZE + 2] - tvec[row * COLUMNS_SIZE + 2] * edge1[row * COLUMNS_SIZE + 1];
+			qvec[row + 1] = tvec[row * COLUMNS_SIZE + 2] * edge1[row * COLUMNS_SIZE] - tvec[row * COLUMNS_SIZE] * edge1[row * COLUMNS_SIZE + 2];
+			qvec[row + 2] = tvec[row * COLUMNS_SIZE] * edge1[row * COLUMNS_SIZE + 1] - tvec[row * COLUMNS_SIZE + 1] * edge1[row * COLUMNS_SIZE];
+
+			v[row] = dir[0] * qvec[row];
+			for (col = 1; col < COLUMNS_SIZE; col++)
+				v[row] += dir[col] * qvec[row + col];
+
+			v[row] /= det[row];
+
+			if (lineType == LINE_TYPE_LINE)
+				t[row] = NAN;
+			else {
+				t[row] = edge2[row * COLUMNS_SIZE] * qvec[row];
+				for (col = 1; col < COLUMNS_SIZE; col++)
+					t[row] += edge2[row * COLUMNS_SIZE + col] * qvec[row + col];
+
+				t[row] /= det[row];
+			}
+
+			intersect[row] = v[row] >= -zero && u[row] + v[row] <= 1.0 + zero;
+		}
+
+		switch (lineType) {
+		case LINE_TYPE_LINE:// Nothing to do
+			break;
+		case LINE_TYPE_RAY:
+			intersect[row] = intersect[row] && t[row] >= -zero;
+			break;
+		case LINE_TYPE_SEGMENT:
+			intersect[row] = intersect[row] && t[row] >= -zero && t[row] <= 1.0 + zero;
+			break;
+		default:
+			printf("Error: lineType must be either LINE_TYPE_LINE, LINE_TYPE_RAY or LINE_TYPE_SEGMENT\n");
+			return;
+		}
+
+		//__syncthreads();
+
+		if (intersect[row] == 1)
+			atomicAdd(visible, 1);
+		//(*visible)++;		
+	}
+}

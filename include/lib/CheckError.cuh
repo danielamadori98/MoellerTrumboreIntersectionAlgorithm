@@ -1,3 +1,5 @@
+#ifndef CHECK_ERROR_CUH
+#define CHECK_ERROR_CUH
 
 #define CHECK_CUDA_ERROR                                                       \
     {                                                                          \
@@ -30,3 +32,5 @@ void cudaErrorHandler(cudaError_t error,
 } // namespace cuda_error
 
 #include "CheckError.i.cuh"
+
+#endif

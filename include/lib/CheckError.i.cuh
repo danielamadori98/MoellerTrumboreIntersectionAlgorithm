@@ -1,3 +1,6 @@
+#ifndef CHECK_ERROR_I_CUH
+#define CHECK_ERROR_I_CUH
+
 #include <cuda_runtime.h>    // cudaError_t
 #include <cassert>
 
@@ -32,3 +35,5 @@ void cudaErrorHandler(cudaError_t error,
 }
 
 } // namespace cuda_error
+
+#endif

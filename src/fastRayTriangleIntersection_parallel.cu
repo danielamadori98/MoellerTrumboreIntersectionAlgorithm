@@ -38,41 +38,39 @@ __global__ void fastRayTriangleIntersection_parallel_full_return(
 			tvec[row * COLUMNS_SIZE + col] = orig[col] - V1[row * COLUMNS_SIZE + col];
 		}
 
-		{// Scope: First Parst: pvec is used only in this block, limiting its scope
-			__shared__ double pvec[BLOCK_ROWS_SIZE * COLUMNS_SIZE];
+		// Scope: First Parst: pvec is used only in this block
+		__shared__ double pvec[BLOCK_ROWS_SIZE * COLUMNS_SIZE];
+			
+		pvec[row * COLUMNS_SIZE] = dir[1] * edge2[row * COLUMNS_SIZE + 2] - dir[2] * edge2[row * COLUMNS_SIZE + 1];
+		pvec[row * COLUMNS_SIZE + 1] = dir[2] * edge2[row * COLUMNS_SIZE] - dir[0] * edge2[row * COLUMNS_SIZE + 2];
+		pvec[row * COLUMNS_SIZE + 2] = dir[0] * edge2[row * COLUMNS_SIZE + 1] - dir[1] * edge2[row * COLUMNS_SIZE];
 
-			pvec[row * COLUMNS_SIZE] = dir[1] * edge2[row * COLUMNS_SIZE + 2] - dir[2] * edge2[row * COLUMNS_SIZE + 1];
-			pvec[row * COLUMNS_SIZE + 1] = dir[2] * edge2[row * COLUMNS_SIZE] - dir[0] * edge2[row * COLUMNS_SIZE + 2];
-			pvec[row * COLUMNS_SIZE + 2] = dir[0] * edge2[row * COLUMNS_SIZE + 1] - dir[1] * edge2[row * COLUMNS_SIZE];
+		det[row] = edge1[row * COLUMNS_SIZE] * pvec[row * COLUMNS_SIZE];
+		for (col = 1; col < COLUMNS_SIZE; col++)
+			det[row] += edge1[row * COLUMNS_SIZE + col] * pvec[row * COLUMNS_SIZE + col];
 
-			det[row] = edge1[row * COLUMNS_SIZE] * pvec[row * COLUMNS_SIZE];
+
+		if (planeType == PLANE_TYPE_TWOSIDED)
+			intersect[row] = abs(det[row]) > eps;
+		else if (planeType == PLANE_TYPE_ONESIDED)
+			intersect[row] = det[row] > eps;
+		else {
+			printf("Error: planeType must be either PLANE_TYPE_TWOSIDED or PLANE_TYPE_ONESIDED\n");
+			return;
+		}
+
+		if (!intersect[row])
+			u[row] = NAN;
+		else {
+			u[row] = tvec[row * COLUMNS_SIZE] * pvec[row * COLUMNS_SIZE];
 			for (col = 1; col < COLUMNS_SIZE; col++)
-				det[row] += edge1[row * COLUMNS_SIZE + col] * pvec[row * COLUMNS_SIZE + col];
+				u[row] += tvec[row * COLUMNS_SIZE + col] * pvec[row * COLUMNS_SIZE + col];
 
+			u[row] /= det[row];
+		}
+		// Second Part: pvec is not used anymore, qvec is used only in this block		
+		double* qvec = pvec;// SIZE: BLOCK_ROWS_SIZE * COLUMNS_SIZE;
 
-			if (planeType == PLANE_TYPE_TWOSIDED)
-				intersect[row] = abs(det[row]) > eps;
-			else if (planeType == PLANE_TYPE_ONESIDED)
-				intersect[row] = det[row] > eps;
-			else {
-				printf("Error: planeType must be either PLANE_TYPE_TWOSIDED or PLANE_TYPE_ONESIDED\n");
-				return;
-			}
-
-			if (!intersect[row])
-				u[row] = NAN;
-			else {
-				u[row] = tvec[row * COLUMNS_SIZE] * pvec[row * COLUMNS_SIZE];
-				for (col = 1; col < COLUMNS_SIZE; col++)
-					u[row] += tvec[row * COLUMNS_SIZE + col] * pvec[row * COLUMNS_SIZE + col];
-
-				u[row] /= det[row];
-			}
-		}//pvec is not used anymore
-
-		// Second Part: qvec is used only in this block, limiting its scope
-		__shared__ double qvec[BLOCK_ROWS_SIZE * COLUMNS_SIZE];
-		
 		if (!intersect[row])
 			v[row] = NAN, t[row] = NAN;
 		else {
@@ -107,8 +105,6 @@ __global__ void fastRayTriangleIntersection_parallel_full_return(
 			printf("Error: lineType must be either LINE_TYPE_LINE, LINE_TYPE_RAY or LINE_TYPE_SEGMENT\n");
 			return;
 		}
-
-		//__syncthreads();
 
 		if (intersect[row])
 			atomicAdd(visible, 1);
@@ -157,45 +153,45 @@ __global__ void fastRayTriangleIntersection_parallel(
 		__shared__ bool intersect[BLOCK_ROWS_SIZE]; // Scope: All Parts
 		__shared__ double u[BLOCK_ROWS_SIZE]; // Scope: All Parts
 
-		{// Scope: First Parst: pvec is used only in this block, limiting its scope
-			__shared__ double pvec[BLOCK_ROWS_SIZE * COLUMNS_SIZE];
 
-			pvec[row * COLUMNS_SIZE] = dir[1] * edge2[row * COLUMNS_SIZE + 2] - dir[2] * edge2[row * COLUMNS_SIZE + 1];
-			pvec[row * COLUMNS_SIZE + 1] = dir[2] * edge2[row * COLUMNS_SIZE] - dir[0] * edge2[row * COLUMNS_SIZE + 2];
-			pvec[row * COLUMNS_SIZE + 2] = dir[0] * edge2[row * COLUMNS_SIZE + 1] - dir[1] * edge2[row * COLUMNS_SIZE];
+		// Scope: First Parst: pvec is used only in this block
+		__shared__ double pvec[BLOCK_ROWS_SIZE * COLUMNS_SIZE];
 
-			det[row] = edge1[row * COLUMNS_SIZE] * pvec[row * COLUMNS_SIZE];
+		pvec[row * COLUMNS_SIZE] = dir[1] * edge2[row * COLUMNS_SIZE + 2] - dir[2] * edge2[row * COLUMNS_SIZE + 1];
+		pvec[row * COLUMNS_SIZE + 1] = dir[2] * edge2[row * COLUMNS_SIZE] - dir[0] * edge2[row * COLUMNS_SIZE + 2];
+		pvec[row * COLUMNS_SIZE + 2] = dir[0] * edge2[row * COLUMNS_SIZE + 1] - dir[1] * edge2[row * COLUMNS_SIZE];
+
+		det[row] = edge1[row * COLUMNS_SIZE] * pvec[row * COLUMNS_SIZE];
+		for (col = 1; col < COLUMNS_SIZE; col++)
+			det[row] += edge1[row * COLUMNS_SIZE + col] * pvec[row * COLUMNS_SIZE + col];
+
+
+		if (planeType == PLANE_TYPE_TWOSIDED)
+			intersect[row] = abs(det[row]) > eps;
+		else if (planeType == PLANE_TYPE_ONESIDED)
+			intersect[row] = det[row] > eps;
+		else {
+			printf("Error: planeType must be either PLANE_TYPE_TWOSIDED or PLANE_TYPE_ONESIDED\n");
+			return;
+		}
+			
+		if (!intersect[row])
+			u[row] = NAN;
+		else {
+			u[row] = tvec[row * COLUMNS_SIZE] * pvec[row * COLUMNS_SIZE];
 			for (col = 1; col < COLUMNS_SIZE; col++)
-				det[row] += edge1[row * COLUMNS_SIZE + col] * pvec[row * COLUMNS_SIZE + col];
+				u[row] += tvec[row * COLUMNS_SIZE + col] * pvec[row * COLUMNS_SIZE + col];
 
-
-			if (planeType == PLANE_TYPE_TWOSIDED)
-				intersect[row] = abs(det[row]) > eps;
-			else if (planeType == PLANE_TYPE_ONESIDED)
-				intersect[row] = det[row] > eps;
-			else {
-				printf("Error: planeType must be either PLANE_TYPE_TWOSIDED or PLANE_TYPE_ONESIDED\n");
-				return;
-			}
-
+			u[row] /= det[row];
+		}
 			
-			if (!intersect[row])
-				u[row] = NAN;
-			else {
-				u[row] = tvec[row * COLUMNS_SIZE] * pvec[row * COLUMNS_SIZE];
-				for (col = 1; col < COLUMNS_SIZE; col++)
-					u[row] += tvec[row * COLUMNS_SIZE + col] * pvec[row * COLUMNS_SIZE + col];
+		intersect[row] = intersect[row] && u[row] >= -zero && u[row] <= 1 + zero;
 
-				u[row] /= det[row];
-			}
-			
-			intersect[row] = intersect[row] && u[row] >= -zero && u[row] <= 1 + zero;
+		// Second Part: t, v, are used only in this block
+		__shared__ double t[BLOCK_ROWS_SIZE], v[BLOCK_ROWS_SIZE];
 
-		}//pvec is not used anymore
-		
-		
-		// Second Part: t, v, qvec are used only in this block, limiting their scope
-		__shared__ double t[BLOCK_ROWS_SIZE], v[BLOCK_ROWS_SIZE], qvec[BLOCK_ROWS_SIZE * COLUMNS_SIZE];
+		// Second Part: pvec is not used anymore, qvec is used only in this block	
+		double* qvec = pvec;// Size: BLOCK_ROWS_SIZE * COLUMNS_SIZE
 
 		if (intersect[row]){
 			qvec[row] = tvec[row * COLUMNS_SIZE + 1] * edge1[row * COLUMNS_SIZE + 2] - tvec[row * COLUMNS_SIZE + 2] * edge1[row * COLUMNS_SIZE + 1];

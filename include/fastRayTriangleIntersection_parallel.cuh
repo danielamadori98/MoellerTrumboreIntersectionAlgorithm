@@ -8,7 +8,7 @@
 * NVIDIA GeForce RTX 2070 SUPER: 48 KB = 49.152 bytes
 */
 
-#define BLOCK_ROWS_SIZE 320
+#define BLOCK_ROWS_SIZE 352
 
 // x: SHARED_MEM_SIZE / MAX_SPACE_COST
 // y: multiple used to round down x to the nearest multiple of y

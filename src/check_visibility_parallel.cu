@@ -209,6 +209,9 @@ double check_visibility_parallel_code(
 
 			//CHECK_CUDA_ERROR
 		}
+		if(V_row - V_rows <= 0)
+			std::cout << V_row - V_rows << "\n";
+
 		fastRayTriangleIntersection_parallel << <gridDim, blockDim, 0 >> > (
 			d_camera_location, d_verts + d_verts_row,
 			d_V1 + d_V_row, d_V2 + d_V_row, d_V3 + d_V_row, V_row - V_rows,

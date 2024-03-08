@@ -12,8 +12,8 @@
 #define LINE_TYPE_SEGMENT 2
 
 // Plane types
-#define PLANE_TYPE_TWOSIDED 0
-#define PLANE_TYPE_ONESIDED 1
+#define PLANE_TYPE_TWO_SIDED 0
+#define PLANE_TYPE_ONE_SIDED 1
 
 
 #define COLUMNS_SIZE 3

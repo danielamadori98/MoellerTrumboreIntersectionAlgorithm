@@ -88,7 +88,7 @@ double check_visibility_parallel_code(
 			fastRayTriangleIntersection_parallel_full_return<< <gridDim, blockDim, 0>> > (
 				d_camera_location, d_verts + d_verts_row,
 				d_V1 + d_V_row, d_V2 + d_V_row, d_V3 + d_V_row, BLOCK_ROWS_SIZE,
-				BORDER_EXCLUSIVE, LINE_TYPE_SEGMENT, PLANE_TYPE_TWOSIDED,
+				BORDER_EXCLUSIVE, LINE_TYPE_SEGMENT, PLANE_TYPE_TWO_SIDED,
 				d_flag, d_t, d_u, d_v,
 				d_visible + verts_row);
 
@@ -103,7 +103,7 @@ double check_visibility_parallel_code(
 		fastRayTriangleIntersection_parallel_full_return<< <gridDim, blockDim, 0 >> > (
 			d_camera_location, d_verts + d_verts_row,
 			d_V1 + d_V_row, d_V2 + d_V_row, d_V3 + d_V_row, V_row - V_rows,
-			BORDER_EXCLUSIVE, LINE_TYPE_SEGMENT, PLANE_TYPE_TWOSIDED,
+			BORDER_EXCLUSIVE, LINE_TYPE_SEGMENT, PLANE_TYPE_TWO_SIDED,
 			d_flag, d_t, d_u, d_v,
 			d_visible + verts_row);
 
@@ -204,7 +204,7 @@ double check_visibility_parallel_code(
 			fastRayTriangleIntersection_parallel << <gridDim, blockDim, 0 >> > (
 				d_camera_location, d_verts + d_verts_row,
 				d_V1 + d_V_row, d_V2 + d_V_row, d_V3 + d_V_row, BLOCK_ROWS_SIZE,
-				BORDER_EXCLUSIVE, LINE_TYPE_SEGMENT, PLANE_TYPE_TWOSIDED,
+				BORDER_EXCLUSIVE, LINE_TYPE_SEGMENT, PLANE_TYPE_TWO_SIDED,
 				d_visible + verts_row);
 
 			//CHECK_CUDA_ERROR
@@ -215,7 +215,7 @@ double check_visibility_parallel_code(
 		fastRayTriangleIntersection_parallel << <gridDim, blockDim, 0 >> > (
 			d_camera_location, d_verts + d_verts_row,
 			d_V1 + d_V_row, d_V2 + d_V_row, d_V3 + d_V_row, V_row - V_rows,
-			BORDER_EXCLUSIVE, LINE_TYPE_SEGMENT, PLANE_TYPE_TWOSIDED,
+			BORDER_EXCLUSIVE, LINE_TYPE_SEGMENT, PLANE_TYPE_TWO_SIDED,
 			d_visible + verts_row);
 		
 		//CHECK_CUDA_ERROR

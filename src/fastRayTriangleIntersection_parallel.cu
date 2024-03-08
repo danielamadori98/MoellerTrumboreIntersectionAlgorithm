@@ -50,9 +50,9 @@ __global__ void fastRayTriangleIntersection_parallel_full_return(
 			det[row] += edge1[row * COLUMNS_SIZE + col] * pvec[row * COLUMNS_SIZE + col];
 
 
-		if (planeType == PLANE_TYPE_TWOSIDED)
+		if (planeType == PLANE_TYPE_TWO_SIDED)
 			intersect[row] = abs(det[row]) > eps;
-		else if (planeType == PLANE_TYPE_ONESIDED)
+		else if (planeType == PLANE_TYPE_ONE_SIDED)
 			intersect[row] = det[row] > eps;
 		else {
 			printf("Error: planeType must be either PLANE_TYPE_TWOSIDED or PLANE_TYPE_ONESIDED\n");
@@ -166,9 +166,9 @@ __global__ void fastRayTriangleIntersection_parallel(
 			det[row] += edge1[row * COLUMNS_SIZE + col] * pvec[row * COLUMNS_SIZE + col];
 
 
-		if (planeType == PLANE_TYPE_TWOSIDED)
+		if (planeType == PLANE_TYPE_TWO_SIDED)
 			intersect[row] = abs(det[row]) > eps;
-		else if (planeType == PLANE_TYPE_ONESIDED)
+		else if (planeType == PLANE_TYPE_ONE_SIDED)
 			intersect[row] = det[row] > eps;
 		else {
 			printf("Error: planeType must be either PLANE_TYPE_TWOSIDED or PLANE_TYPE_ONESIDED\n");

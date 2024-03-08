@@ -67,11 +67,11 @@ void fastRayTriangleIntersection_sequential(
 		end
 		*/
 
-		if (planeType == PLANE_TYPE_TWOSIDED)
+		if (planeType == PLANE_TYPE_TWO_SIDED)
 			for (unsigned short row = 0; row < rows; row++)
 				intersect[row] = abs(det[row]) > eps;
 
-		else if (planeType == PLANE_TYPE_ONESIDED)
+		else if (planeType == PLANE_TYPE_ONE_SIDED)
 			for (unsigned short row = 0; row < rows; row++)
 				intersect[row] = det[row] > eps;
 
@@ -240,11 +240,11 @@ void fastRayTriangleIntersection_sequential(
 		end
 		*/
 
-		if (planeType == PLANE_TYPE_TWOSIDED)
+		if (planeType == PLANE_TYPE_TWO_SIDED)
 			for (unsigned short row = 0; row < rows; row++)
 				intersect[row] = abs(det[row]) > eps;
 
-		else if (planeType == PLANE_TYPE_ONESIDED)
+		else if (planeType == PLANE_TYPE_ONE_SIDED)
 			for (unsigned short row = 0; row < rows; row++)
 				intersect[row] = det[row] > eps;
 

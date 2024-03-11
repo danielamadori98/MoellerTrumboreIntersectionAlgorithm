@@ -57,7 +57,7 @@ void check_visibility(
 	check_visibility_sequential_code(camera_location, h_verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
 	host_TM.stop();
 	time_h = host_TM.duration();
-	host_TM.print("MoellerTrumboreIntersectionAlgorithm host:   ");
+	host_TM.print("Host:   ");
 	check_results(visible, gt, verts_rows);
 	
 	time_d = check_visibility_parallel_code(camera_location, h_verts, verts_rows, V1, V2, V3, meshes_rows, flag, t, u, v, visible);
@@ -74,7 +74,7 @@ void check_visibility(
 	check_visibility_sequential_code(camera_location, h_verts, verts_rows, V1, V2, V3, meshes_rows, visible);
 	host_TM.stop();
 	time_h = host_TM.duration();
-	host_TM.print("MoellerTrumboreIntersectionAlgorithm host:   ");
+	host_TM.print("Host:   ");
 	check_results(visible, gt, verts_rows);
 
 	time_d = check_visibility_parallel_code(camera_location, h_verts, verts_rows, V1, V2, V3, meshes_rows, visible);
@@ -90,5 +90,5 @@ void check_visibility(
 
 	delete[] visible;
 
-	std::cout << "Speedup: " <<  time_h / time_d  << "x\n\n";
+	std::cout << "Speedup: " << std::fixed << std::setprecision(5) <<  time_h / time_d  << " x\n\n";
 }

@@ -47,5 +47,14 @@ Run the executable from the `build` directory, providing the necessary CSV file 
 The ground_truth.csv file is needed just to check the correctness, it was used during the code development.
 
 ### Performance analysis:
-Kernel Size: 352
-Speedup: 5.0x
+
+For the evaluation process, 100 executions were performed on the same dataset using a computer from the PARCO lab of the University of Verona, equipped with an Intel i5-7400 CPU and an NVIDIA GeForce RTX 2070 SUPER GPU that has a memory of 7982 MB and a shared memory per block of 48 KB.
+
+The bottleneck of this code is the shared memory size, which limits the maximum kernel size. In this case the kernel size is 352.
+
+The results obtained using the mean are:
+- Sequantial code: 10110.92 ms, std: 1124.08 ms
+- Parallel code: 1317.09 ms, std: 94.16 ms
+- Speedup: 7.68
+
+Using other GPUs can easily run the code, showing memory usage and possibly modifying the kernel size to make the best use of the resources.

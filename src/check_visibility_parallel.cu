@@ -9,7 +9,7 @@ void gpu_info(int device, unsigned short max_space_cost) {
 
 	const unsigned short max_block_rows_size = MAX_BLOCK_ROWS_SIZE(sharedMemoryPerBlock / max_space_cost);
 	const unsigned short max_shared_memory_cost = max_block_rows_size * max_space_cost;
-
+	
 	std::cout << "** GPU info: **\n"
 		<< "Your are using: " << BLOCK_ROWS_SIZE << " / " << maxThreadsPerBlock
 		<< " threads per block\nYou can use a max of " << max_block_rows_size
